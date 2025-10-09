@@ -1,0 +1,35 @@
+/* Tailwind v4 recommended import */
+@import "tailwindcss";
+
+/* Brand tokens */
+:root{
+  --bg:   #eae4da !important;   /* background */
+  --text: #153247;   /* primary text & accents */
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* (optional) reusable helpers if you want them */
+.card {
+  @apply rounded-3xl border shadow-sm;
+  background-color: #f2ede7;    /* new card background */
+  border-color: #ffffff;        /* softer border */
+}
+.card:hover { box-shadow: 0 10px 24px rgba(0,0,0,.06) }
+
+.btn  { @apply w-full rounded-2xl border bg-white py-3 text-base focus:outline-none
+               focus-visible:ring-4 focus-visible:ring-offset-2 disabled:opacity-50; }
+.btn-lg { @apply py-6 text-xl; }
+
+.chip { @apply w-full text-left mb-3 rounded-2xl border p-4; }
+.chip-lg { @apply p-6 text-xl; }
+.chip--active { @apply ring-2; }
+
+body {
+  background-color: #eae4da !important;
+  color: #153247;
+}
+.card { background-color: #f2ede7;}
