@@ -1,0 +1,178 @@
+[
+  {
+    "id": "age_how_old_are_you",
+    "category": "Age",
+    "title": "How old are you?",
+    "type": "single",
+    "options": [
+      "18-25",
+      "26-35",
+      "36-45",
+      "46-55",
+      "56+"
+    ],
+    "required": true
+  },
+  {
+    "id": "gender_are_you",
+    "category": "Gender",
+    "title": "Are you",
+    "type": "single",
+    "options": [
+      "Female",
+      "Male",
+      "Non-binary",
+      "Prefer not to stay"
+    ],
+    "required": true
+  },
+  {
+    "id": "diet_do_you_follow_a_specific_diet",
+    "category": "Diet",
+    "title": "Do you follow a specific diet?",
+    "type": "single",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "required": true
+  },
+  {
+    "id": "diet_which_diet",
+    "category": "Diet",
+    "title": "Which Diet",
+    "type": "single",
+    "options": [
+      "Low carb",
+      "Low fat",
+      "Vegetarian",
+      "Vegan",
+      "Pescatarian",
+      "Dairy free",
+      "Gluten free",
+      "Nut free"
+    ],
+    "required": true
+  },
+  {
+    "id": "diet_during_the_day_do_you_get_hungry_or_have_en",
+    "category": "Diet",
+    "title": "Do you often feel hungry or experience energy dips between meals?",
+    "type": "single",
+    "options": [
+      "Yes",
+      "Sometimes",
+      "No"
+    ],
+    "required": true
+  },
+  {
+    "id": "diet_how_often_do_you_consume_processed_food_in_",
+    "category": "Diet",
+    "title": "How often do you eat processed foods in a typical day? For example: ready meals, crisps, biscuits, packaged snacks, sugary cereals, or processed meats",
+    "type": "multi",
+    "options": [
+      "Rarely",
+      "1-2 times a day",
+      "3-4 times a day",
+      "5+ times"
+    ],
+    "required": true
+  },
+
+  {
+    "id": "exercise_when_you_exercise_what_do_you_do",
+    "category": "Exercise",
+    "title": "What kind of exercise do you usually do?",
+    "type": "multi",
+    "options": [
+      "Running or Cardio",
+      "Weights",
+      "Classes",
+      "Organised Sports",
+      "Crossfit / Hyrox",
+      "Boxing",
+      "Walking",
+      "Other",
+      "None"
+    ],
+    "required": true
+  },
+  {
+    "id": "feeling_activity_levels",
+    "category": "Feeling",
+    "title": "How active are you in a typical week?",
+    "type": "slider",
+    "options": [],
+    "required": false,
+    "minLabel": "Not very",
+    "maxLabel": "Very active"
+  },
+  {
+    "id": "feeling_screen_time",
+    "category": "Feeling",
+    "title": "How much time do you spend looking at screens each day?",
+    "type": "slider",
+    "options": [],
+    "required": false,
+    "minLabel": "Very little",
+    "maxLabel": "Most of the day"
+  },
+  {
+    "id": "feeling_sleep",
+    "category": "Feeling",
+    "title": "How well do you usually sleep?",
+    "type": "slider",
+    "options": [],
+    "required": false,
+    "minLabel": "Poorly",
+    "maxLabel": "Very Well"
+  },
+  {
+    "id": "feeling_tiredness",
+    "category": "Feeling",
+    "title": "How tired do you usually feel during the day?",
+    "type": "slider",
+    "options": [],
+    "required": false,
+    "minLabel": "Exhausted",
+    "maxLabel": "Rarely tired"
+  },
+
+  {
+    "id": "health_do_you_wear_glasses_or_use_contact_lenses",
+    "category": "Health",
+    "title": "Do you wear glasses or use contact lenses?",
+    "type": "single",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "required": true
+  },
+  {
+    "id": "health_which_of_the_below_are_your_top_two_prior",
+    "category": "Health",
+    "title": "Which of the below are your top two priorities in the upcoming months?",
+    "type": "multi",
+    "options": [
+      "Healthy lifestyle",
+      "More energy",
+      "Better immunity",
+      "Better focus & memory",
+      "Improved skin",
+      "Healthier hair & nails",
+      "Menstrual cycle health",
+      "Support menopause",
+      "Gut health & digestion",
+      "Increase libido",
+      "Feel more rested",
+      "Bone & joint health",
+      "Support a positive mood",
+      "Support healthy aging",
+      "Heart health",
+      "Improve performance & recovery"
+    ],
+    "required": true
+  }
+]
