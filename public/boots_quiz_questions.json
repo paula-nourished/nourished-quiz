@@ -47,10 +47,10 @@
       "Low fat",
       "Vegetarian",
       "Vegan",
-      "Pescatarian",
+      "Calorie Restricted Diet",
+      "Currently on GLP-1s",
       "Dairy free",
-      "Gluten free",
-      "Nut free"
+      "Gluten free"
     ],
     "required": true
   },
@@ -98,6 +98,17 @@
     ],
     "required": true
   },
+    {
+    "id": "health_do_you_wear_glasses_or_use_contact_lenses",
+    "category": "Health",
+    "title": "How quickly do you bounce back from workouts?",
+    "type": "slider",
+    "options": [],
+    "required": false,
+    "minLabel": "Straight away",
+    "maxLabel": "A few days"
+  },
+  
   {
     "id": "feeling_activity_levels",
     "category": "Feeling",
@@ -138,25 +149,13 @@
     "minLabel": "Exhausted",
     "maxLabel": "Rarely tired"
   },
-
-  {
-    "id": "health_do_you_wear_glasses_or_use_contact_lenses",
-    "category": "Health",
-    "title": "Do you wear glasses or use contact lenses?",
-    "type": "single",
-    "options": [
-      "Yes",
-      "No"
-    ],
-    "required": true
-  },
   {
     "id": "health_which_of_the_below_are_your_top_two_prior",
     "category": "Health",
     "title": "Which of the below are your top two priorities in the upcoming months?",
     "type": "multi",
     "options": [
-      "Healthy lifestyle",
+      "Support balancing stress",
       "More energy",
       "Better immunity",
       "Better focus & memory",
@@ -165,7 +164,7 @@
       "Menstrual cycle health",
       "Support menopause",
       "Gut health & digestion",
-      "Increase libido",
+      "Weight maintenance",
       "Feel more rested",
       "Bone & joint health",
       "Support a positive mood",
