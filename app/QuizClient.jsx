@@ -183,7 +183,9 @@ function getAnswerIconPath(label) {
   if (key.includes("menstrual")) return "/icons/menstrual.svg";
   if (key.includes("menopause")) return "/icons/menopause.svg";
   if (key.includes("libido")) return "/icons/libido.svg";
-
+  if (key.includes("weight")) return "/icons/weight.svg";
+  if (key.includes("stress")) return "/icons/stress.svg";
+	
   // exercise set
   if (key.includes("running")) return "/icons/running.svg";
   if (key.includes("weights") || key.includes("strength")) return "/icons/weights.svg";
