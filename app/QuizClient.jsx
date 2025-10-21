@@ -1062,6 +1062,35 @@ function setAnswer(qid, value, mode = "single") {
       <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
         Your recommendation
       </h2>
+{isResults && (
+  <Stage kiosk={kiosk}>
+    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
+      <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
+        Your recommendation
+      </h2>
+
+      {/* 🧭 DEBUG PANEL — TEMPORARY */}
+      {(() => {
+        const weightKeys = Object.keys(weights || {});
+        const answerKeys = Object.keys(answers || {});
+        const tallies = scoreAnswers(answers, weights, questions);
+        return (
+          <div
+            className="mx-auto mb-4 text-left text-xs rounded-2xl border p-3"
+            style={{
+              width: "min(560px,92vw)",
+              borderColor: BRAND.border,
+              opacity: 0.85,
+              background: "#fff",
+            }}
+          >
+            <div><strong>Debug Info</strong></div>
+            <div>Weight keys: {weightKeys.join(" | ") || "(none)"}</div>
+            <div>Answer keys: {answerKeys.join(" | ") || "(none)"}</div>
+            <div>Tallies: {Object.keys(tallies).length ? JSON.stringify(tallies) : "(none)"}</div>
+          </div>
+        );
+      })()}
 
       {(() => {
         const tallies = scoreAnswers(answers, weights, questions);
