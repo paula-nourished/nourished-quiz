@@ -19,6 +19,17 @@ const BRAND = {
   border: "#d6d1c9",
 };
 
+// ---- scoring config
+const WEIGHTS_URL = "/boots_quiz_weights.json"; // put the JSON file in /public
+
+// Stable order for tie-breaking
+const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
+
+// Must exactly match the priorities question title in the sheet/weights JSON
+const PRIORITIES_TITLE = "Which of the below are your top two priorities in the upcoming months?";
+const isPriorities = (q) =>
+  String(q?.title || "").trim().toLowerCase() === PRIORITIES_TITLE.trim().toLowerCase();
+
 
 // ---- utilities
 function useQueryParams() {
@@ -226,6 +237,109 @@ function isNo(val) {
   return String(val ?? "").toLowerCase() === "no";
 }
 
+// ---- scoring helpers
+function buildOptionLabelIndex(questions) {
+  // title -> { id -> label }
+  const index = {};
+  (questions || []).forEach((q) => {
+    const map = {};
+    (q.answers || []).forEach((a) => {
+      const id = String(a?.id ?? a?.value ?? a?.label ?? "");
+      const label = String(a?.label ?? a?.name ?? a?.value ?? a?.id ?? id);
+      if (id) map[id] = label;
+    });
+    if (q?.title) index[q.title] = map;
+  });
+  return index;
+}
+
+function scoreAnswers(answers, weightsMap, questions) {
+  const tallies = {};
+  const add = (code, n = 1) => {
+    if (!code) return;
+    tallies[code] = (tallies[code] || 0) + n;
+  };
+
+  const labelIndex = buildOptionLabelIndex(questions);
+
+  Object.keys(weightsMap || {}).forEach((title) => {
+    const optionMap = weightsMap[title] || {};           // { "Really tired": ["Ecp"], ... }
+    let chosen = answers[title];                          // could be id, label, array, or number (slider)
+    if (chosen == null) return;
+
+    // Helper: map an ID to its LABEL for this title (if needed)
+    const idToLabel = (v) => {
+      const vStr = String(v);
+      // If the weights already have vStr as a label key, keep it
+      if (Object.prototype.hasOwnProperty.call(optionMap, vStr)) return vStr;
+      // Otherwise, try translate id -> label via questions
+      const map = labelIndex[title] || {};
+      return map[vStr] || vStr;
+    };
+
+    // SLIDER mapping: numbers 1..5 need bucketing to the *first/last* weighted option
+    const mapSliderNumberToLabel = (num) => {
+      const keys = Object.keys(optionMap);
+      if (!keys.length) return null;
+      const low = keys[0];
+      const high = keys[keys.length - 1];
+      const n = Number(num);
+      if (Number.isNaN(n)) return null;
+      if (n <= 2) return low;      // lean to "low" end label (e.g., "Really tired")
+      if (n >= 4) return high;     // lean to "high" end label (e.g., "Full of beans")
+      return null;                 // middle (3) contributes nothing unless you want neutral weight
+    };
+
+    // Normalise chosen into an array of *labels* that exist in optionMap
+    let labels = [];
+    if (Array.isArray(chosen)) {
+      labels = chosen.map(idToLabel).filter((lab) => optionMap[lab]);
+    } else if (typeof chosen === "number" || /^[0-9]+$/.test(String(chosen))) {
+      const lab = mapSliderNumberToLabel(chosen);
+      if (lab && optionMap[lab]) labels = [lab];
+    } else {
+      const lab = idToLabel(chosen);
+      if (optionMap[lab]) labels = [lab];
+    }
+
+    // Add weights for each mapped label
+    labels.forEach((lab) => (optionMap[lab] || []).forEach((code) => add(code, 1)));
+  });
+
+  return tallies; // e.g. { Eic: 3, Mjb: 2, ... }
+}
+
+// ---- choose the winning product code from tallies
+function pickWinner(tallies = {}, answers = {}, weightsMap = {}) {
+  // 1) No scores? no winner.
+  const entries = Object.entries(tallies).filter(([, v]) => v > 0);
+  if (!entries.length) return null;
+
+  // 2) Highest score first
+  const max = Math.max(...entries.map(([, v]) => v));
+  let candidates = entries.filter(([, v]) => v === max).map(([code]) => code);
+
+  if (candidates.length === 1) return candidates[0];
+
+  // 3) Tie-break #1: stable product order
+  const orderIndex = (code) => {
+    const i = PRODUCT_ORDER.indexOf(code);
+    return i === -1 ? Number.POSITIVE_INFINITY : i;
+  };
+  candidates.sort((a, b) => orderIndex(a) - orderIndex(b));
+
+  // 4) Tie-break #2: lexicographic as final fallback
+  candidates.sort((a, b) => {
+    const oa = orderIndex(a);
+    const ob = orderIndex(b);
+    if (oa !== ob) return oa - ob;
+    return a.localeCompare(b);
+  });
+
+  return candidates[0] || null;
+}
+
+
 // ---- generic answer chip (legacy multi)
 function AnswerChip({ selected, children, onClick, kiosk }) {
   return (
@@ -430,7 +544,8 @@ export default function QuizClient() {
   const { get } = useQueryParams();
   const kiosk = get("kiosk", "0") === "1";
   const context = get("context", "default");
-
+  const [weights, setWeights] = useState({});
+	
   useAutoResize();
 
   // Idle
@@ -530,28 +645,61 @@ export default function QuizClient() {
     };
   }, []);
 
-  const total = questions.length;
-  const current = step === 0 ? null : questions[step - 1];
-  const isResults = step > total;
+	// Load weightings JSON for scoring
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    try {
+      const res = await fetch(WEIGHTS_URL, { cache: "no-store" });
+      const w = res.ok ? await res.json() : {};
+      if (!cancelled) setWeights(w || {});
+    } catch {
+      if (!cancelled) setWeights({});
+    }
+  })();
+  return () => { cancelled = true; };
+}, []);
 
-  function setAnswer(qid, value, mode = "single") {
-    setAnswers((prev) => {
-      const next = { ...prev };
+const total = Array.isArray(questions) ? questions.length : 0;
+const isLoading = total === 0;                 // guard while questions load
+const isResults = total > 0 && step > total;   // only show results when we have questions
+const current = step === 0 ? null : questions[step - 1];
+
+	useEffect(() => {
+  if (total === 0) return;
+  const maxStep = total + 1; // +1 is results page
+  if (step < 0 || step > maxStep) setStep(0);
+}, [total, step]);
+
+function setAnswer(qid, value, mode = "single") {
+  setAnswers((prev) => {
+    const next = { ...prev };
+    const titleKey = current?.title; // current visible title
+
+    const saveVal = (destKey) => {
+      if (!destKey) return;
       if (mode === "multi") {
-        const set = new Set(Array.isArray(prev[qid]) ? prev[qid] : []);
+        const set = new Set(Array.isArray(prev[destKey]) ? prev[destKey] : []);
         set.has(value) ? set.delete(value) : set.add(value);
-        next[qid] = Array.from(set);
+        next[destKey] = Array.from(set);
       } else if (mode === "multi-limit-2") {
-        const set = new Set(Array.isArray(prev[qid]) ? prev[qid] : []);
+        const set = new Set(Array.isArray(prev[destKey]) ? prev[destKey] : []);
         if (set.has(value)) set.delete(value);
         else if (set.size < 2) set.add(value);
-        next[qid] = Array.from(set);
+        next[destKey] = Array.from(set);
       } else {
-        next[qid] = value;
+        next[destKey] = value;
       }
-      return next;
-    });
-  }
+    };
+
+    // store under qid (for navigation) and under the title (for scoring)
+    saveVal(qid);
+    if (titleKey) saveVal(titleKey);
+
+    return next;
+  });
+}
+
 
   function canContinue() {
     if (step === 0) return true;
@@ -669,6 +817,16 @@ export default function QuizClient() {
         }
       `}</style>
 
+		{isLoading && (
+  <Stage kiosk={kiosk}>
+    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
+      <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 12 }}>
+        Loading quiz…
+      </h2>
+      <div style={{ opacity: 0.7 }}>One moment while we fetch your questions.</div>
+    </div>
+  </Stage>
+)}
       {/* idle attract */}
       {kiosk && idle && !isResults && (
         <AttractScreen
@@ -782,7 +940,7 @@ export default function QuizClient() {
                             max="5"
                             step="1"
                             value={val}
-                            onChange={(e) => setAnswer(current.id, e.target.value, "slider")}
+                            onChange={(e) => setAnswer(current.id, Number(e.target.value), "slider")}
                             aria-label={current.title}
                             className="nourished-range"
                             style={{
@@ -898,16 +1056,87 @@ export default function QuizClient() {
       )}
 
       {/* results */}
-      {isResults && (
-        <Stage kiosk={kiosk}>
-          <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
-            <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
-              Your recommendation
-            </h2>
-            <div style={{ marginBottom: 16, opacity: 0.85 }}>
-              Coming Soon — your personalised result will appear here once scoring is connected.
+{isResults && (
+  <Stage kiosk={kiosk}>
+    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
+      <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
+        Your recommendation
+      </h2>
+
+      {(() => {
+        const tallies = scoreAnswers(answers, weights, questions);
+        const winner = pickWinner(tallies, answers, weights);
+{/* --- Compact counts per SKU (only those with >0) --- */}
+{(() => {
+  const allCodes = Array.from(new Set([...PRODUCT_ORDER, ...Object.keys(tallies)]));
+  const counts = allCodes
+    .map((code) => [code, tallies[code] || 0])
+    .filter(([, v]) => v > 0); // remove this filter if you want to show zeros
+
+  if (!counts.length) return null;
+
+  return (
+    <>
+      {/* one-line summary like: Eic 2 • Shp 1 • ... */}
+      <div className="mt-3 text-sm opacity-80">
+        {counts.map(([code, v], i) => (
+          <span key={code}>
+            {code} {v}
+            {i < counts.length - 1 ? " • " : ""}
+          </span>
+        ))}
+      </div>
+
+      {/* optional neat list */}
+      <div className="mt-3 grid gap-1 text-left text-sm"
+           style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
+        {counts.map(([code, v]) => (
+          <div key={code} className="flex justify-between">
+            <span>{code}</span>
+            <span>{v}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+})()}
+
+        return (
+          <>
+            <div
+              className="mx-auto mb-6 rounded-3xl border p-6"
+              style={{ width: "min(560px, 92vw)", borderColor: BRAND.border }}
+            >
+              <div className="text-6xl font-extrabold mb-2" style={{ color: BRAND.text }}>
+                {winner || "—"}
+              </div>
+              <div style={{ opacity: 0.75 }}>
+                {winner ? "Top match based on your answers." : "No result yet — please answer the questions."}
+              </div>
+
+              {Object.values(tallies).some((v) => v > 0) && (
+                <div className="mt-4 text-left text-sm">
+                  {Object.entries(tallies)
+                    .filter(([_, v]) => v > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([code, v]) => (
+                      <div key={code} className="flex justify-between">
+                        <span>{code}</span><span>{v}</span>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
+
             <div className="grid gap-3" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
+              <Button
+                kiosk={kiosk}
+                onClick={() => {
+                  postToParent({ type: "NOURISHED_QUIZ_EVENT", event: "results_continue_clicked", payload: { winner } });
+                }}
+              >
+                Continue
+              </Button>
               <Button
                 kiosk={kiosk}
                 onClick={() => {
@@ -918,22 +1147,18 @@ export default function QuizClient() {
               >
                 Restart
               </Button>
-              <Button
-                kiosk={kiosk}
-                onClick={() => {
-                  postToParent({ type: "NOURISHED_QUIZ_EVENT", event: "cta_clicked" });
-                  alert("CTA clicked. In production, deep-link or let host handle.");
-                }}
-              >
-                Continue
-              </Button>
             </div>
-            <p className="text-xs" style={{ opacity: 0.6, marginTop: 16 }}>
-              Context: <code>{context}</code>
-            </p>
-          </div>
-        </Stage>
-      )}
+          </>
+        );
+      })()}
+
+      <p className="text-xs" style={{ opacity: 0.6, marginTop: 16 }}>
+        Context: <code>{context}</code>
+      </p>
+    </div>
+  </Stage>
+)}
+
 
       <div className="h-4" aria-hidden />
     </div>
