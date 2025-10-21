@@ -29,29 +29,29 @@ const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca",
 const PRODUCT_META = {
 Ecp: { name: "Ecp", title: "Energy • Cognition • Psychological", blurb: "We recommend the Ecp formula, precision-blended to support energy¹², cognitive³ and psychological function⁴.", images: { exploded: "/products/Ecp/exploded.png", pack: "/products/Ecp-1.png" } },
 	
-Eic: { name: "Eic", title: "Immunity • Cognition", blurb: "Targeted support for immune and cognitive function.", images:{ exploded:"/products/Eic/exploded.png", pack:"/products/Eic-1.png" } },
+Eic: { name: "Eic", title: "Immunity • Cognition", blurb: "Targeted support for immune and cognitive function.", images:{ exploded:"/products/Eic/exploded.png", pack:"products/Eic-1.png" } },
 	
-Mjb: { name: "Mjb", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Mjb-1.png" } },
+Mjb: { name: "Mjb", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Mjb-1.png" } },
 	
-Mjb: { name: "Bmca", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Bmca-1.png" } },
+Mjb: { name: "Bmca", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Bmca-1.png" } },
 	
-Mjb: { name: "Cpe", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Cpe-1.png" } },
+Mjb: { name: "Cpe", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Cpe-1.png" } },
 	
-Mjb: { name: "Epi", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Epi-1.png" } },
+Mjb: { name: "Epi", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Epi-1.png" } },
 	
-Mjb: { name: "Gsi", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Gsi-1.png" } },
+Mjb: { name: "Gsi", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Gsi-1.png" } },
 	
-Mjb: { name: "Hcp", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Hcp-1.png" } },
+Mjb: { name: "Hcp", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Hcp-1.png" } },
 	
-Mjb: { name: "Hpes", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Hpes-1.png" } },
+Mjb: { name: "Hpes", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Hpes-1.png" } },
 	
-Mjb: { name: "Meca", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Meca-1.png" } },
+Mjb: { name: "Meca", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/roducts/Meca-1.png" } },
 	
-Mjb: { name: "Rnp", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Rnp-1.png" } },
+Mjb: { name: "Rnp", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Rnp-1.png" } },
 
-Mjb: { name: "Shp", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Shp-1.png" } },
+Mjb: { name: "Shp", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Shp-1.png" } },
 
-Mjb: { name: "Spe", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Spe-1.png" } },
+Mjb: { name: "Spe", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Spe-1.png" } },
 	
   // ...
 };
@@ -617,6 +617,10 @@ function ProductResultView({ code, tallies, context, kiosk }) {
             style={{ boxShadow: TILE.shadow }}
             onError={(e) => (e.currentTarget.style.display = "none")}
           />
+
+		<p className="text-base md:text-lg" style={{ color: BRAND.text }}>
+            {meta.blurb}
+          </p>
         </div>
 
         {/* Right: pack + copy */}
