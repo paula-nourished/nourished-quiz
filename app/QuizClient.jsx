@@ -515,20 +515,39 @@ export default function QuizClient() {
     return () => { cancelled = true; };
   }, []);
 
-  // Load weightings
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+// Load weightings (robust)
+useEffect(() => {
+  let cancelled = false;
+
+  async function tryLoad(url) {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Fetch ${url} failed: HTTP ${res.status}`);
+    return res.json();
+  }
+
+  (async () => {
+    try {
+      let w = await tryLoad("/boots_quiz_weights.json");
+      if (!cancelled) setWeights(w || {});
+    } catch (e1) {
+      console.error("[weights] primary failed:", e1);
       try {
-        const res = await fetch(WEIGHTS_URL, { cache: "no-store" });
-        const w = res.ok ? await res.json() : {};
-        if (!cancelled) setWeights(w || {});
-      } catch {
-        if (!cancelled) setWeights({});
+        let w2 = await tryLoad("boots_quiz_weights.json"); // relative fallback
+        if (!cancelled) setWeights(w2 || {});
+      } catch (e2) {
+        console.error("[weights] fallback failed:", e2);
+        if (!cancelled) {
+          setWeights({});
+          // OPTIONAL: expose a visible note in results if you want
+          (window.__WEIGHTS_ERROR__ = String(e2?.message || e2));
+        }
       }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    }
+  })();
+
+  return () => { cancelled = true; };
+}, []);
+
 
   // Flow guards
   const total = Array.isArray(questions) ? questions.length : 0;
