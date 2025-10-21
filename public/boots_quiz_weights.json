@@ -1,144 +1,64 @@
 {
   "How old are you?": {
-    "56+": [
-      "Bmca"
-    ]
+    "56+": ["Bmca"]
   },
   "How tired do you usually feel during the day?": {
-    "Exhausted": [
-      "Ecp"
-    ]
+    "Exhausted": ["Ecp"]
   },
   "How active are you in a typical week?": {
-    "Not very": [
-      "Meca"
-    ],
-    "Very active": [
-      "Bmca"
-    ]
+    "Not very": ["Meca"],
+    "Very active": ["Bmca"]
   },
   "How well do you usually sleep?": {
-    "Poorly": [
-      "Rnp"
-    ]
+    "Poorly": ["Rnp"]
   },
   "How much time do you spend looking at screens each day?": {
-    "Most of the day:" [
-      "Cpe"
-    ]
+    "Most of the day": ["Cpe"]
   },
   "What kind of exercise do you usually do?": {
-    "Running or Cardio": [
-      "Mjb"
-    ],
-    "Weights": [
-      "Mjb"
-    ],
-    "Crossfit / Hyrox": [
-      "Mjb"
-    ],
-    "Boxing": [
-      "Mjb"
-    ],
-    "None": [
-      "Meca"
-    ]
+    "Running or Cardio": ["Mjb"],
+    "Weights": ["Mjb"],
+    "Crossfit / Hyrox": ["Mjb"],
+    "Boxing": ["Mjb"],
+    "None": ["Meca"]
   },
   "How quickly do you bounce back from workouts?": {
-    "A few days": [
-      "Mjb"
-    ]
+    "A few days": ["Mjb"]
   },
   "Which Diet": {
-    "Low carb": [
-      "Gsi"
-    ],
-    "Low fat": [
-      "Meca"
-    ],
-    "Vegetarian": [
-      "Eic"
-    ],
-    "Vegan": [
-      "Eic"
-    ],
-    "Dairy free": [
-      "Bmca"
-    ],
-    "Gluten free": [
-      "Eic"
-    ],
-    "Currenly on GLP-1s": [
-      "Gsi"
-    ],
-    "Calorie Restricted Diet": [
-      "Gsi"
-    ]
+    "Low carb": ["Gsi"],
+    "Low fat": ["Meca"],
+    "Vegetarian": ["Eic"],
+    "Vegan": ["Eic"],
+    "Dairy free": ["Bmca"],
+    "Gluten free": ["Eic"],
+    "Currently on GLP-1s": ["Gsi"],
+    "Calorie Restricted Diet": ["Gsi"]
   },
   "Do you often feel hungry or experience energy dips between meals?": {
-    "Yes": [
-      "Meca"
-    ],
-    "Sometimes": [
-      "Meca"
-    ]
+    "Yes": ["Meca"],
+    "Sometimes": ["Meca"]
   },
   "How often do you eat processed foods in a typical day? For example: ready meals, crisps, biscuits, packaged snacks, sugary cereals, or processed meats": {
-    "3-4 times a day": [
-      "Bmca"
-    ],
-    "5+ times": [
-      "Gsi"
-    ]
+    "3-4 times a day": ["Bmca"],
+    "5+ times": ["Gsi"]
   },
   "Which of the below are your top two priorities in the upcoming months?": {
-    "Support balancing stress": [
-      "Epi"
-    ],
-    "More energy": [
-      "Ecp"
-    ],
-    "Better immunity": [
-      "Eic"
-    ],
-    "Better focus & memory": [
-      "Cpe"
-    ],
-    "Improved skin": [
-      "Spe"
-    ],
-    "Healthier hair & nails": [
-      "Shp"
-    ],
-    "Menstrual cycle health": [
-      "Hpes"
-    ],
-    "Support menopause": [
-      "hcb"
-    ],
-    "Gut health & digestion": [
-      "Gsi"
-    ],
-    "Weight maintenance": [
-      "Bmca"
-    ],
-    "Feel more rested": [
-      "Rnp"
-    ],
-    "Bone & joint health": [
-      "Mjb"
-    ],
-    "Support a positive mood": [
-      "Epi"
-    ],
-    "Support healthy aging": [
-      "Mjb"
-    ],
-    "Heart health": [
-      "Bmca"
-    ],
-    "Improve performance & recovery": [
-      "Mjb"
-    ]
+    "Support balancing stress": ["Epi"],
+    "More energy": ["Ecp"],
+    "Better immunity": ["Eic"],
+    "Better focus & memory": ["Cpe"],
+    "Improved skin": ["Spe"],
+    "Healthier hair & nails": ["Shp"],
+    "Menstrual cycle health": ["Hpes"],
+    "Support menopause": ["hcb"],
+    "Gut health & digestion": ["Gsi"],
+    "Weight maintenance": ["Bmca"],
+    "Feel more rested": ["Rnp"],
+    "Bone & joint health": ["Mjb"],
+    "Support a positive mood": ["Epi"],
+    "Support healthy aging": ["Mjb"],
+    "Heart health": ["Bmca"],
+    "Improve performance & recovery": ["Mjb"]
   }
 }
