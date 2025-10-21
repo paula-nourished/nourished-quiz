@@ -1126,84 +1126,109 @@ function setAnswer(qid, value, mode = "single") {
         </>
       )}
 
-      {/* results */}
+     {/* results */}
 {isResults && (
   <Stage kiosk={kiosk}>
     <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
       <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
         Your recommendation
       </h2>
-		{DEBUG_SCORING && (
-  <div
-    className="mx-auto mb-4 rounded-xl border p-3 text-left text-xs"
-    style={{ width: "min(860px, 92vw)", borderColor: BRAND.border, background: "rgba(255,255,255,0.6)" }}
-  >
-    <strong>Debug:</strong>
-    <pre style={{ whiteSpace: "pre-wrap" }}>
+
+      {/* Optional debug panel: open the quiz with ?debug=1 to see it */}
+      {DEBUG_SCORING && (
+        <div
+          className="mx-auto mb-4 rounded-xl border p-3 text-left text-xs"
+          style={{ width: "min(860px, 92vw)", borderColor: BRAND.border, background: "rgba(255,255,255,0.6)" }}
+        >
+          <strong>Debug:</strong>
+          <pre style={{ whiteSpace: "pre-wrap", marginTop: 8 }}>
+{(() => {
+  try {
+    const t = scoreAnswers(answers, weights, questions);
+    return JSON.stringify(
+      { answeredKeys: Object.keys(answers || {}), tallies: t, questionCount: questions?.length || 0 },
+      null,
+      2
+    );
+  } catch (e) {
+    return "error: " + String(e?.message || e);
+  }
+})()}
+          </pre>
+        </div>
+      )}
+
+      {/* Actual results content */}
       {(() => {
         try {
-          const t = scoreAnswers(answers, weights, questions);
-          return JSON.stringify({ answeredKeys: Object.keys(answers || {}), tallies: t }, null, 2);
-        } catch (e) {
-          return "error: " + String(e?.message || e);
-        }
-      })()}
-    </pre>
-  </div>
-)}
-      {(() => {
-        const tallies = scoreAnswers(answers, weights, questions);
-        const winner = pickWinner(tallies, answers, weights);
-
-        return (
-          <>
-            <div
-              className="mx-auto mb-6 rounded-3xl border p-6"
-              style={{ width: "min(560px, 92vw)", borderColor: BRAND.border }}
-            >
-              <div className="text-6xl font-extrabold mb-2" style={{ color: BRAND.text }}>
-                {winner || "—"}
+          if (!weights || !Object.keys(weights).length) {
+            return (
+              <div style={{ marginBottom: 16, opacity: 0.85 }}>
+                Loading scoring data…
               </div>
-              <div style={{ opacity: 0.75 }}>
-                {winner ? "Top match based on your answers." : "No result yet — please answer the questions."}
-              </div>
+            );
+          }
 
-              {Object.values(tallies).some((v) => v > 0) && (
-                <div className="mt-4 text-left text-sm">
-                  {Object.entries(tallies)
-                    .filter(([_, v]) => v > 0)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([code, v]) => (
-                      <div key={code} className="flex justify-between">
-                        <span>{code}</span><span>{v}</span>
-                      </div>
-                    ))}
+          const tallies = scoreAnswers(answers, weights, questions);
+          const winner = pickWinner(tallies, answers, weights);
+
+          return (
+            <>
+              <div
+                className="mx-auto mb-6 rounded-3xl border p-6"
+                style={{ width: "min(560px, 92vw)", borderColor: BRAND.border }}
+              >
+                <div className="text-6xl font-extrabold mb-2" style={{ color: BRAND.text }}>
+                  {winner || "—"}
                 </div>
-              )}
-            </div>
+                <div style={{ opacity: 0.75 }}>
+                  {winner ? "Top match based on your answers." : "No result yet — please answer the questions."}
+                </div>
 
-            <div className="grid gap-3" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
-              <Button
-                kiosk={kiosk}
-                onClick={() => {
-                  postToParent({ type: "NOURISHED_QUIZ_EVENT", event: "results_continue_clicked", payload: { winner } });
-                }}
-              >
-                Continue
-              </Button>
-              <Button
-                kiosk={kiosk}
-                onClick={() => {
-                  setAnswers({});
-                  setStep(0);
-                  setIdle(false);
-                }}
-              >
-                Restart
-              </Button>
+                {Object.values(tallies || {}).some((v) => v > 0) && (
+                  <div className="mt-4 text-left text-sm">
+                    {Object.entries(tallies)
+                      .filter(([_, v]) => v > 0)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([code, v]) => (
+                        <div key={code} className="flex justify-between">
+                          <span>{code}</span><span>{v}</span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-3" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
+                <Button
+                  kiosk={kiosk}
+                  onClick={() => {
+                    postToParent({ type: "NOURISHED_QUIZ_EVENT", event: "results_continue_clicked", payload: { winner } });
+                  }}
+                >
+                  Continue
+                </Button>
+                <Button
+                  kiosk={kiosk}
+                  onClick={() => {
+                    setAnswers({});
+                    setStep(0);
+                    setIdle(false);
+                  }}
+                >
+                  Restart
+                </Button>
+              </div>
+            </>
+          );
+        } catch (err) {
+          console.error("Results render error:", err);
+          return (
+            <div style={{ marginBottom: 16, color: "#b91c1c" }}>
+              Sorry — something went wrong rendering results.
             </div>
-          </>
-        );
+          );
+        }
       })()}
 
       <p className="text-xs" style={{ opacity: 0.6, marginTop: 16 }}>
@@ -1212,6 +1237,7 @@ function setAnswer(qid, value, mode = "single") {
     </div>
   </Stage>
 )}
+
 
 
       <div className="h-4" aria-hidden />
