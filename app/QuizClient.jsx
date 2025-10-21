@@ -1066,29 +1066,6 @@ function setAnswer(qid, value, mode = "single") {
         Your recommendation
       </h2>
 
-      {/* 🧭 DEBUG PANEL — TEMPORARY */}
-      {(() => {
-        const weightKeys = Object.keys(weights || {});
-        const answerKeys = Object.keys(answers || {});
-        const t = scoreAnswers(answers, weights, questions);
-        return (
-          <div
-            className="mx-auto mb-4 text-left text-xs rounded-2xl border p-3"
-            style={{
-              width: "min(560px,92vw)",
-              borderColor: BRAND.border,
-              opacity: 0.85,
-              background: "#fff",
-            }}
-          >
-            <div><strong>Debug Info</strong></div>
-            <div>Weight keys: {weightKeys.join(" | ") || "(none)"} </div>
-            <div>Answer keys: {answerKeys.join(" | ") || "(none)"} </div>
-            <div>Tallies: {Object.keys(t).length ? JSON.stringify(t) : "(none)"} </div>
-          </div>
-        );
-      })()}
-
       {/* Results card + SKU counts */}
       {(() => {
         const tallies = scoreAnswers(answers, weights, questions);
