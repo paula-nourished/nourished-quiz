@@ -306,6 +306,35 @@ function scoreAnswers(answers, weightsMap, questions) {
   return tallies; // e.g. { Eic: 3, Mjb: 2, ... }
 }
 
+function pickWinner(tallies, answers, weightsMap) {
+  const order = Array.isArray(PRODUCT_ORDER) ? PRODUCT_ORDER : [];
+  if (!order.length) return null;
+
+  // 1) Highest total
+  let max = -Infinity;
+  let leaders = [];
+  order.forEach((code) => {
+    const v = Number(tallies?.[code] || 0);
+    if (v > max) { max = v; leaders = [code]; }
+    else if (v === max) leaders.push(code);
+  });
+
+  if (!leaders.length) return null;
+  if (leaders.length === 1) return leaders[0];
+
+  // 2) Tie-break using priorities (if present in weights + answers)
+  const priMap = weightsMap?.[PRIORITIES_TITLE];
+  const priAns = answers?.[PRIORITIES_TITLE];
+  if (priMap && Array.isArray(priAns) && priAns.length) {
+    for (const opt of priAns) {
+      const match = (priMap[opt] || [])[0];
+      if (match && leaders.includes(match)) return match;
+    }
+  }
+
+  // 3) Stable fallback by PRODUCT_ORDER
+  return leaders.sort((a, b) => order.indexOf(a) - order.indexOf(b))[0] || null;
+}
 
 
 // ---- generic answer chip (legacy multi)
