@@ -235,48 +235,77 @@ function isNo(val) {
 }
 
 // ---- scoring helpers
-function scoreAnswers(answers, weightsMap) {
+function buildOptionLabelIndex(questions) {
+  // title -> { id -> label }
+  const index = {};
+  (questions || []).forEach((q) => {
+    const map = {};
+    (q.answers || []).forEach((a) => {
+      const id = String(a?.id ?? a?.value ?? a?.label ?? "");
+      const label = String(a?.label ?? a?.name ?? a?.value ?? a?.id ?? id);
+      if (id) map[id] = label;
+    });
+    if (q?.title) index[q.title] = map;
+  });
+  return index;
+}
+
+function scoreAnswers(answers, weightsMap, questions) {
   const tallies = {};
-  const add = (code, n = 1) => { if (!code) return; tallies[code] = (tallies[code] || 0) + n; };
+  const add = (code, n = 1) => {
+    if (!code) return;
+    tallies[code] = (tallies[code] || 0) + n;
+  };
 
-  // weightsMap is keyed by question TITLE; we read the user's answers by that title
+  const labelIndex = buildOptionLabelIndex(questions);
+
   Object.keys(weightsMap || {}).forEach((title) => {
-    const optionMap = weightsMap[title] || {};
-    const chosen = answers[title];
+    const optionMap = weightsMap[title] || {};           // { "Really tired": ["Ecp"], ... }
+    let chosen = answers[title];                          // could be id, label, array, or number (slider)
+    if (chosen == null) return;
 
+    // Helper: map an ID to its LABEL for this title (if needed)
+    const idToLabel = (v) => {
+      const vStr = String(v);
+      // If the weights already have vStr as a label key, keep it
+      if (Object.prototype.hasOwnProperty.call(optionMap, vStr)) return vStr;
+      // Otherwise, try translate id -> label via questions
+      const map = labelIndex[title] || {};
+      return map[vStr] || vStr;
+    };
+
+    // SLIDER mapping: numbers 1..5 need bucketing to the *first/last* weighted option
+    const mapSliderNumberToLabel = (num) => {
+      const keys = Object.keys(optionMap);
+      if (!keys.length) return null;
+      const low = keys[0];
+      const high = keys[keys.length - 1];
+      const n = Number(num);
+      if (Number.isNaN(n)) return null;
+      if (n <= 2) return low;      // lean to "low" end label (e.g., "Really tired")
+      if (n >= 4) return high;     // lean to "high" end label (e.g., "Full of beans")
+      return null;                 // middle (3) contributes nothing unless you want neutral weight
+    };
+
+    // Normalise chosen into an array of *labels* that exist in optionMap
+    let labels = [];
     if (Array.isArray(chosen)) {
-      chosen.forEach((opt) => (optionMap[opt] || []).forEach((code) => add(code, 1)));
-    } else if (chosen != null) {
-      (optionMap[chosen] || []).forEach((code) => add(code, 1));
+      labels = chosen.map(idToLabel).filter((lab) => optionMap[lab]);
+    } else if (typeof chosen === "number" || /^[0-9]+$/.test(String(chosen))) {
+      const lab = mapSliderNumberToLabel(chosen);
+      if (lab && optionMap[lab]) labels = [lab];
+    } else {
+      const lab = idToLabel(chosen);
+      if (optionMap[lab]) labels = [lab];
     }
+
+    // Add weights for each mapped label
+    labels.forEach((lab) => (optionMap[lab] || []).forEach((code) => add(code, 1)));
   });
 
-  return tallies;
+  return tallies; // e.g. { Eic: 3, Mjb: 2, ... }
 }
 
-function pickWinner(tallies, answers, weightsMap) {
-  // 1) highest score
-  let max = -Infinity, leaders = [];
-  PRODUCT_ORDER.forEach((code) => {
-    const v = tallies[code] || 0;
-    if (v > max) { max = v; leaders = [code]; }
-    else if (v === max) { leaders.push(code); }
-  });
-  if (leaders.length === 1) return leaders[0];
-
-  // 2) tie-break via priorities (if present)
-  const priMap = weightsMap?.[PRIORITIES_TITLE];
-  const priAns = answers?.[PRIORITIES_TITLE];
-  if (priMap && Array.isArray(priAns) && priAns.length) {
-    for (const opt of priAns) {
-      const code = (priMap[opt] || [])[0];
-      if (code && leaders.includes(code)) return code;
-    }
-  }
-
-  // 3) stable fallback
-  return leaders.sort((a, b) => PRODUCT_ORDER.indexOf(a) - PRODUCT_ORDER.indexOf(b))[0];
-}
 
 
 // ---- generic answer chip (legacy multi)
@@ -879,7 +908,7 @@ function setAnswer(qid, value, mode = "single") {
                             max="5"
                             step="1"
                             value={val}
-                            onChange={(e) => setAnswer(current.id, e.target.value, "slider")}
+                            onChange={(e) => setAnswer(current.id, Number(e.target.value), "slider")}
                             aria-label={current.title}
                             className="nourished-range"
                             style={{
@@ -1003,7 +1032,7 @@ function setAnswer(qid, value, mode = "single") {
       </h2>
 
       {(() => {
-        const tallies = scoreAnswers(answers, weights);
+        const tallies = scoreAnswers(answers, weights, questions);
         const winner = pickWinner(tallies, answers, weights);
 
         return (
