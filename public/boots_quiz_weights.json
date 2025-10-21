@@ -4,37 +4,37 @@
       "Bmca"
     ]
   },
-  "Tiredness": {
-    "Really tired": [
+  "How tired do you usually feel during the day?": {
+    "Exhausted": [
       "Ecp"
     ]
   },
-  "Activity levels": {
-    "Not very active": [
+  "How active are you in a typical week?": {
+    "Not very": [
       "Meca"
     ],
-    "Gym junkie": [
+    "Very active": [
       "Bmca"
     ]
   },
-  "Sleep": {
-    "Sleepness nights": [
+  "How well do you usually sleep?": {
+    "Poorly": [
       "Rnp"
     ]
   },
-  "Screen time": {
-    "Lots of screen time": [
+  "How much time do you spend looking at screens each day?": {
+    "Most of the day: [
       "Cpe"
     ]
   },
-  "When you exercise, what do you do": {
+  "What kind of exercise do you usually do?": {
     "Running or Cardio": [
       "Mjb"
     ],
     "Weights": [
       "Mjb"
     ],
-    "Crossfit/Hyrox": [
+    "Crossfit / Hyrox": [
       "Mjb"
     ],
     "Boxing": [
@@ -44,8 +44,8 @@
       "Meca"
     ]
   },
-  "How quickly do you recover from strenious activity or excercise ? (such as muscle soreness, stiffness)": {
-    "Over 5 days": [
+  "How quickly do you bounce back from workouts?": {
+    "A few days": [
       "Mjb"
     ]
   },
@@ -62,23 +62,20 @@
     "Vegan": [
       "Eic"
     ],
-    "Pescatarian": [
-      "Ecp"
-    ],
     "Dairy free": [
       "Bmca"
     ],
     "Gluten free": [
       "Eic"
     ],
-    "I am currenly taking GLP-1s": [
+    "Currenly on GLP-1s": [
       "Gsi"
     ],
     "Calorie Restricted Diet": [
       "Gsi"
     ]
   },
-  "During the day, do you get hungry or have energy dips between meals?": {
+  "Do you often feel hungry or experience energy dips between meals?": {
     "Yes": [
       "Meca"
     ],
@@ -86,7 +83,7 @@
       "Meca"
     ]
   },
-  "How often do you consume processed food in an average day (for example: ready meals, crisps, biscuits, packaged snacks, sugary cereals, or processed meats)": {
+  "How often do you eat processed foods in a typical day? For example: ready meals, crisps, biscuits, packaged snacks, sugary cereals, or processed meats": {
     "3-4 times a day": [
       "Bmca"
     ],
@@ -95,7 +92,7 @@
     ]
   },
   "Which of the below are your top two priorities in the upcoming months?": {
-    "Support with Stress": [
+    "Support balancing stress": [
       "Epi"
     ],
     "More energy": [
@@ -107,7 +104,7 @@
     "Better focus & memory": [
       "Cpe"
     ],
-    "Improve skin / Reduce Wrinkle": [
+    "Improved skin": [
       "Spe"
     ],
     "Healthier hair & nails": [
@@ -116,16 +113,16 @@
     "Menstrual cycle health": [
       "Hpes"
     ],
-    "Support  during menopause": [
+    "Support menopause": [
       "hcb"
     ],
     "Gut health & digestion": [
       "Gsi"
     ],
-    "Weight Maintenance": [
+    "Weight maintenance": [
       "Bmca"
     ],
-    "Feel more rested and refreshed": [
+    "Feel more rested": [
       "Rnp"
     ],
     "Bone & joint health": [
@@ -137,10 +134,10 @@
     "Support healthy aging": [
       "Mjb"
     ],
-    "Cardiovascular health": [
+    "Heart health": [
       "Bmca"
     ],
-    "Improve performance, endurance & recovery": [
+    "Improve performance & recovery": [
       "Mjb"
     ]
   }
