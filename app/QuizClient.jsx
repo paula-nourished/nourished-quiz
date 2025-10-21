@@ -25,6 +25,28 @@ const WEIGHTS_URL = "boots_quiz_weights.json"; // put the JSON file in /public
 // Stable order for tie-breaking
 const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
 
+// ---- product display metadata (code -> display)
+const PRODUCT_META = {
+  Ecp: {
+    name: "Ecp",
+    title: "Energy • Cognition • Psychological",
+    blurb:
+      "We recommend the Ecp formula, precision-blended to support energy¹², cognitive³ and psychological function⁴.",
+    // put these images in /public/products/Ecp/
+    images: {
+      exploded: "/products/Ecp/exploded.png",
+      pack: "/products/Ecp/pack.png",
+    },
+  },
+  // add the rest as you create assets:
+  Eic: { name: "Eic", title: "Immunity • Cognition", blurb: "Targeted support for immune and cognitive function.", images:{ exploded:"/products/Eic/exploded.png", pack:"/products/Eic/pack.png" } },
+  Mjb: { name: "Mjb", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"/products/Mjb/pack.png" } },
+  // ...
+};
+
+// optional logo (already have this in /public)
+const LOGO_SRC = "/nourished-formula-logo.svg";
+
 // Must exactly match the priorities question title in the sheet/weights JSON
 const PRIORITIES_TITLE = "Which of the below are your top two priorities in the upcoming months?";
 const isPriorities = (q) =>
@@ -538,6 +560,107 @@ function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect
 
 // ---- Priorities = Multi with icons (max 2) – just reuse above
 const PeriodicOptionsMultiWithIcons = PeriodicOptionsMulti;
+
+function ProductResultView({ code, tallies, context, kiosk }) {
+  const meta = PRODUCT_META[code] || {
+    name: code,
+    title: "",
+    blurb: "Your personalised recommendation based on your answers.",
+    images: { exploded: "/fallback-exploded.png", pack: "/fallback-pack.png" },
+  };
+
+  // compact counts line (non-zero only)
+  const counts = Object.entries(tallies)
+    .filter(([, v]) => v > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  return (
+    <div
+      className="rounded-[24px] border p-6 md:p-8"
+      style={{ borderColor: BRAND.border, background: "rgba(255,255,255,.9)" }}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <img src={LOGO_SRC} alt="Nourished Formula" className="h-8 md:h-10" />
+        <div className="text-right">
+          <div className="text-5xl md:text-6xl font-extrabold leading-none" style={{ color: BRAND.text }}>
+            {meta.name}
+          </div>
+          {meta.title && (
+            <div className="text-sm md:text-base opacity-75" style={{ color: BRAND.text }}>
+              {meta.title}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 2-column visual layout */}
+      <div className="grid gap-6 md:gap-8 md:grid-cols-2 items-center">
+        {/* Left: exploded stack / ingredients */}
+        <div className="order-2 md:order-1">
+          <img
+            src={meta.images.exploded}
+            alt={`${meta.name} exploded stack`}
+            className="w-full h-auto rounded-2xl shadow"
+            style={{ boxShadow: TILE.shadow }}
+            onError={(e) => (e.currentTarget.style.display = "none")}
+          />
+        </div>
+
+        {/* Right: pack + copy */}
+        <div className="order-1 md:order-2 flex flex-col items-start gap-4">
+          <img
+            src={meta.images.pack}
+            alt={`${meta.name} pack shot`}
+            className="w-60 md:w-72 h-auto self-center md:self-end rounded-xl"
+            onError={(e) => (e.currentTarget.style.display = "none")}
+          />
+
+          <p className="text-base md:text-lg" style={{ color: BRAND.text }}>
+            {meta.blurb}
+          </p>
+
+          {counts.length > 0 && (
+            <div className="text-sm opacity-80 w-full">
+              {counts.map(([c, v], i) => (
+                <span key={c}>
+                  {c} {v}
+                  {i < counts.length - 1 ? " • " : ""}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer actions */}
+      <div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
+        <Button
+          kiosk={kiosk}
+          onClick={() => {
+            window.parent?.postMessage({ type: "NOURISHED_QUIZ_EVENT", event: "results_continue_clicked", payload: { winner: code } }, "*");
+          }}
+        >
+          Continue
+        </Button>
+        <Button
+          kiosk={kiosk}
+          onClick={() => {
+            // reset handled by parent component
+            const ev = new Event("nourished-quiz-restart");
+            window.dispatchEvent(ev);
+          }}
+        >
+          Restart
+        </Button>
+      </div>
+
+      <p className="text-[11px] opacity-60 mt-3 text-center">Context: <code>{context}</code></p>
+    </div>
+  );
+}
+
+
 
 // ---- Main
 export default function QuizClient() {
@@ -1066,75 +1189,53 @@ function setAnswer(qid, value, mode = "single") {
         Your recommendation
       </h2>
 
-      {/* Results card + SKU counts */}
       {(() => {
         const tallies = scoreAnswers(answers, weights, questions);
         const winner = pickWinner(tallies, answers, weights);
 
-        const allCodes = Array.from(new Set([...PRODUCT_ORDER, ...Object.keys(tallies)]));
-        const counts = allCodes
-          .map((code) => [code, tallies[code] || 0])
-          .filter(([, v]) => v > 0); // remove this filter to show zeros
+        if (!winner) {
+          return (
+            <>
+              <div
+                className="mx-auto rounded-3xl border p-6"
+                style={{ width: "min(560px, 92vw)", borderColor: BRAND.border }}
+              >
+                <div className="text-6xl font-extrabold mb-2" style={{ color: BRAND.text }}>—</div>
+                <div style={{ opacity: 0.75 }}>No result yet — please answer the questions.</div>
+              </div>
+
+              {/* Bottom buttons */}
+              <div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
+                <Button
+                  kiosk={kiosk}
+                  onClick={() => {
+                    setAnswers({});
+                    setStep(0);
+                    setIdle(false);
+                  }}
+                >
+                  Restart
+                </Button>
+              </div>
+            </>
+          );
+        }
 
         return (
           <>
-            <div
-              className="mx-auto mb-6 rounded-3xl border p-6"
-              style={{ width: "min(560px, 92vw)", borderColor: BRAND.border }}
-            >
-              <div className="text-6xl font-extrabold mb-2" style={{ color: BRAND.text }}>
-                {winner || "—"}
-              </div>
-              <div style={{ opacity: 0.75 }}>
-                {winner ? "Top match based on your answers." : "No result yet — please answer the questions."}
-              </div>
+            {/* Product card with images, blurb, and compact counts inside */}
+            <ProductResultView code={winner} tallies={tallies} context={context} kiosk={kiosk} />
 
-              {/* Optional full tallies list (sorted) */}
-              {Object.values(tallies).some((v) => v > 0) && (
-                <div className="mt-4 text-left text-sm">
-                  {Object.entries(tallies)
-                    .filter(([, v]) => v > 0)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([code, v]) => (
-                      <div key={code} className="flex justify-between">
-                        <span>{code}</span><span>{v}</span>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-
-            {/* Compact counts line + neat list */}
-            {counts.length > 0 && (
-              <>
-                <div className="mt-3 text-sm opacity-80">
-                  {counts.map(([code, v], i) => (
-                    <span key={code}>
-                      {code} {v}{i < counts.length - 1 ? " • " : ""}
-                    </span>
-                  ))}
-                </div>
-
-                <div
-                  className="mt-3 grid gap-1 text-left text-sm"
-                  style={{ width: "min(520px, 90vw)", marginInline: "auto" }}
-                >
-                  {counts.map(([code, v]) => (
-                    <div key={code} className="flex justify-between">
-                      <span>{code}</span>
-                      <span>{v}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Buttons */}
+            {/* Bottom buttons */}
             <div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
               <Button
                 kiosk={kiosk}
                 onClick={() => {
-                  postToParent({ type: "NOURISHED_QUIZ_EVENT", event: "results_continue_clicked", payload: { winner } });
+                  postToParent({
+                    type: "NOURISHED_QUIZ_EVENT",
+                    event: "results_continue_clicked",
+                    payload: { winner }
+                  });
                 }}
               >
                 Continue
@@ -1160,6 +1261,7 @@ function setAnswer(qid, value, mode = "single") {
     </div>
   </Stage>
 )}
+
 
 
 
