@@ -1062,18 +1062,12 @@ function setAnswer(qid, value, mode = "single") {
       <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
         Your recommendation
       </h2>
-{isResults && (
-  <Stage kiosk={kiosk}>
-    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
-      <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
-        Your recommendation
-      </h2>
 
       {/* 🧭 DEBUG PANEL — TEMPORARY */}
       {(() => {
         const weightKeys = Object.keys(weights || {});
         const answerKeys = Object.keys(answers || {});
-        const tallies = scoreAnswers(answers, weights, questions);
+        const t = scoreAnswers(answers, weights, questions);
         return (
           <div
             className="mx-auto mb-4 text-left text-xs rounded-2xl border p-3"
@@ -1085,50 +1079,22 @@ function setAnswer(qid, value, mode = "single") {
             }}
           >
             <div><strong>Debug Info</strong></div>
-            <div>Weight keys: {weightKeys.join(" | ") || "(none)"}</div>
-            <div>Answer keys: {answerKeys.join(" | ") || "(none)"}</div>
-            <div>Tallies: {Object.keys(tallies).length ? JSON.stringify(tallies) : "(none)"}</div>
+            <div>Weight keys: {weightKeys.join(" | ") || "(none)"} </div>
+            <div>Answer keys: {answerKeys.join(" | ") || "(none)"} </div>
+            <div>Tallies: {Object.keys(t).length ? JSON.stringify(t) : "(none)"} </div>
           </div>
         );
       })()}
 
+      {/* Results card + SKU counts */}
       {(() => {
         const tallies = scoreAnswers(answers, weights, questions);
         const winner = pickWinner(tallies, answers, weights);
-{/* --- Compact counts per SKU (only those with >0) --- */}
-{(() => {
-  const allCodes = Array.from(new Set([...PRODUCT_ORDER, ...Object.keys(tallies)]));
-  const counts = allCodes
-    .map((code) => [code, tallies[code] || 0])
-    .filter(([, v]) => v > 0); // remove this filter if you want to show zeros
 
-  if (!counts.length) return null;
-
-  return (
-    <>
-      {/* one-line summary like: Eic 2 • Shp 1 • ... */}
-      <div className="mt-3 text-sm opacity-80">
-        {counts.map(([code, v], i) => (
-          <span key={code}>
-            {code} {v}
-            {i < counts.length - 1 ? " • " : ""}
-          </span>
-        ))}
-      </div>
-
-      {/* optional neat list */}
-      <div className="mt-3 grid gap-1 text-left text-sm"
-           style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
-        {counts.map(([code, v]) => (
-          <div key={code} className="flex justify-between">
-            <span>{code}</span>
-            <span>{v}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-})()}
+        const allCodes = Array.from(new Set([...PRODUCT_ORDER, ...Object.keys(tallies)]));
+        const counts = allCodes
+          .map((code) => [code, tallies[code] || 0])
+          .filter(([, v]) => v > 0); // remove this filter to show zeros
 
         return (
           <>
@@ -1143,10 +1109,11 @@ function setAnswer(qid, value, mode = "single") {
                 {winner ? "Top match based on your answers." : "No result yet — please answer the questions."}
               </div>
 
+              {/* Optional full tallies list (sorted) */}
               {Object.values(tallies).some((v) => v > 0) && (
                 <div className="mt-4 text-left text-sm">
                   {Object.entries(tallies)
-                    .filter(([_, v]) => v > 0)
+                    .filter(([, v]) => v > 0)
                     .sort((a, b) => b[1] - a[1])
                     .map(([code, v]) => (
                       <div key={code} className="flex justify-between">
@@ -1157,7 +1124,33 @@ function setAnswer(qid, value, mode = "single") {
               )}
             </div>
 
-            <div className="grid gap-3" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
+            {/* Compact counts line + neat list */}
+            {counts.length > 0 && (
+              <>
+                <div className="mt-3 text-sm opacity-80">
+                  {counts.map(([code, v], i) => (
+                    <span key={code}>
+                      {code} {v}{i < counts.length - 1 ? " • " : ""}
+                    </span>
+                  ))}
+                </div>
+
+                <div
+                  className="mt-3 grid gap-1 text-left text-sm"
+                  style={{ width: "min(520px, 90vw)", marginInline: "auto" }}
+                >
+                  {counts.map(([code, v]) => (
+                    <div key={code} className="flex justify-between">
+                      <span>{code}</span>
+                      <span>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Buttons */}
+            <div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
               <Button
                 kiosk={kiosk}
                 onClick={() => {
@@ -1187,6 +1180,7 @@ function setAnswer(qid, value, mode = "single") {
     </div>
   </Stage>
 )}
+
 
 
       <div className="h-4" aria-hidden />
