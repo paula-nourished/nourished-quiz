@@ -1,16 +1,16 @@
-// QuizClient.jsx
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 
 /**
- * Nourished Formula Quiz — clean rebuild
- * - Landing → Questions → Results flow in a 90vw canvas
- * - Questions loaded from /public/boots_quiz_questions.json
- * - Weightings loaded from /public/boots_quiz_weights.json (derived from your Excel "QUIZ" tab)
- * - Answers stored by id AND by title (so weights keyed by title can score)
- * - Robust scorer: fuzzy title matching, id→label, label normalisation, slider bucketing
- * - Optional debug panel: add ?debug=1 to URL
+ * Nourished Formula Quiz — 90vw layout
+ * - All pages (landing, questions, results) render inside a 90vw container
+ * - Kiosk idle screen "Get Started" jumps straight to Q1
+ * - Robust slider detection (accepts: slider/range/scale/likert OR inferred from min/max labels)
+ * - Priorities: icon tiles (max 2)
+ * - Exercise: multi-select tiles (max 2)
+ * - Gender: icon tiles
+ * - Processed-food question gets split title + helper text
  */
 
 // ---- brand
@@ -20,102 +20,15 @@ const BRAND = {
 };
 
 // ---- scoring config
-const WEIGHTS_URL = "/boots_quiz_weights.json";       // put this JSON in /public
-const QUESTIONS_URL = "/boots_quiz_questions.json";    // your questions JSON in /public
+const WEIGHTS_URL = "/boots_quiz_weights.json"; // put the JSON file in /public
+
+// Stable order for tie-breaking
 const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
+
+// Must exactly match the priorities question title in the sheet/weights JSON
 const PRIORITIES_TITLE = "Which of the below are your top two priorities in the upcoming months?";
 
-// ---- diagnostics: see exactly why a question didn't score
-function findWeightsForTitle(weightsMap, qTitle) {
-  if (!weightsMap || !qTitle) return null;
-  const n = norm(qTitle);
-  const weightsNorm = new Map(Object.entries(weightsMap).map(([t, map]) => [norm(t), { title: t, map }]));
-  const exact = weightsNorm.get(n);
-  if (exact) return { ...exact, match: "exact" };
-  for (const [kn, obj] of weightsNorm.entries()) {
-    if (n.includes(kn) || kn.includes(n)) return { ...obj, match: "fuzzy" };
-  }
-  return null;
-}
-
-function sliderBucketLabel(optionMap, value) {
-  const keys = Object.keys(optionMap || {});
-  if (!keys.length) return null;
-  const low = keys[0];
-  const high = keys[keys.length - 1];
-  const n = Number(value);
-  if (!Number.isFinite(n)) return null;
-  if (n <= 2) return low;
-  if (n >= 4) return high;
-  return null; // middle = neutral
-}
-
-function buildOptionLabelIndex(questions) {
-  const index = {};
-  (questions || []).forEach((q) => {
-    const map = {};
-    (q?.answers || []).forEach((a) => {
-      const id = String(a?.id ?? a?.value ?? a?.label ?? "");
-      const label = String(a?.label ?? a?.name ?? a?.value ?? a?.id ?? id);
-      if (id) map[id] = label;
-    });
-    if (q?.title) index[q.title] = map;
-  });
-  return index;
-}
-
-function diagnoseMapping(answers, weights, questions) {
-  const rows = [];
-  const labelIndex = buildOptionLabelIndex(questions);
-
-  (questions || []).forEach((q) => {
-    const qTitle = q?.title || "(no title)";
-    const found = findWeightsForTitle(weights, qTitle);
-    const optionMap = found?.map || {};
-    const optionKeys = Object.keys(optionMap);
-
-    let chosen = answers[qTitle];
-    if (chosen == null) chosen = answers[q.id];
-
-    let resolved = [];
-    if (chosen != null) {
-      const index = labelIndex[qTitle] || {};
-      const optionMapNorm = new Map(optionKeys.map((lab) => [norm(lab), lab]));
-      const idToLabel = (v) => {
-        const vStr = String(v);
-        if (Object.prototype.hasOwnProperty.call(optionMap, vStr)) return vStr; // already a label
-        const viaId = index[vStr];
-        if (viaId && optionMap[viaId]) return viaId;
-        return optionMapNorm.get(norm(vStr)) || vStr;
-      };
-
-      if (Array.isArray(chosen)) {
-        resolved = chosen.map(idToLabel).filter((lab) => optionMap[lab]);
-      } else if (typeof chosen === "number" || /^[0-9]+$/.test(String(chosen))) {
-        const lab = sliderBucketLabel(optionMap, chosen);
-        resolved = lab && optionMap[lab] ? [lab] : [];
-      } else {
-        const lab0 = idToLabel(chosen);
-        const lab = optionMapNorm.get(norm(lab0)) || lab0;
-        resolved = optionMap[lab] ? [lab] : [];
-      }
-    }
-
-    rows.push({
-      titleUI: qTitle,
-      weightsMatchedTitle: found?.title || "(no match)",
-      matchType: found?.match || "(none)",
-      optionKeys,
-      chosenRaw: chosen === undefined ? "(none)" : chosen,
-      resolvedLabelsUsed: resolved,
-    });
-  });
-
-  return rows;
-}
-
-
-// ---- small utils
+// ---- utilities
 function useQueryParams() {
   const [params, setParams] = useState(null);
   useEffect(() => {
@@ -124,9 +37,13 @@ function useQueryParams() {
   const get = (k, fallback = null) => (params ? params.get(k) ?? fallback : fallback);
   return { get, raw: params };
 }
+
 function postToParent(message) {
-  try { window.parent?.postMessage(message, "*"); } catch {}
+  try {
+    window.parent?.postMessage(message, "*");
+  } catch {}
 }
+
 function useAutoResize() {
   useEffect(() => {
     const sendHeight = () => {
@@ -145,22 +62,6 @@ function useAutoResize() {
     };
   }, []);
 }
-function getDebugFlag() {
-  try {
-    const usp = new URLSearchParams(window.location.search);
-    return usp.get("debug") === "1";
-  } catch { return false; }
-}
-const DEBUG_SCORING = typeof window !== "undefined" ? getDebugFlag() : false;
-
-// ---- title/label normaliser
-function norm(s) {
-  return String(s || "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .replace(/[’“”"']/g, "'")
-    .trim();
-}
 
 // ---- centered 90vw stage
 function Stage({ kiosk, children }) {
@@ -175,7 +76,15 @@ function Stage({ kiosk, children }) {
         boxSizing: "border-box",
       }}
     >
-      <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto" }}>{children}</div>
+      <div
+        style={{
+          width: "90vw",
+          maxWidth: "90vw",
+          marginInline: "auto",
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -235,26 +144,6 @@ function AttractScreen({ onStart, kiosk }) {
   );
 }
 
-// ---- icons (you can adjust as you add assets)
-function getAnswerIconPath(label) {
-  const key = String(label || "").toLowerCase();
-  if (key.includes("energy")) return "/icons/energy.svg";
-  if (key.includes("rest") || key.includes("sleep")) return "/icons/rest.svg";
-  if (key.includes("focus") || key.includes("memory")) return "/icons/memory.svg";
-  if (key.includes("immun")) return "/icons/immunity.svg";
-  if (key.includes("hair")) return "/icons/hair.svg";
-  if (key.includes("skin")) return "/icons/skin.svg";
-  if (key.includes("joint")) return "/icons/joint.svg";
-  if (key.includes("mood") || key.includes("positive")) return "/icons/positive.svg";
-  if (key.includes("gut") || key.includes("digest")) return "/icons/digestion.svg";
-  if (key.includes("cardio") || key.includes("heart")) return "/icons/heart.svg";
-  if (key.includes("menopause")) return "/icons/menopause.svg";
-  if (key.includes("menstrual")) return "/icons/menstrual.svg";
-  if (key.includes("weight")) return "/icons/weight.svg";
-  if (key.includes("stress")) return "/icons/stress.svg";
-  return "/icons/sparkles.svg";
-}
-
 // ---- tiles palette & styles
 const PERIODIC_PALETTE = [
   { bg: "#DC8B73", text: "#ffffff" },
@@ -265,6 +154,7 @@ const PERIODIC_PALETTE = [
   { bg: "#afb28b", text: "#153247" },
   { bg: "#c38c96", text: "#153247" },
 ];
+
 const TILE = {
   bg: "rgba(255,255,255,0.9)",
   border: "rgba(21,50,71,.10)",
@@ -273,110 +163,51 @@ const TILE = {
   shadowActive: "0 10px 20px rgba(21,50,71,.18)",
 };
 
-// ---- option renders
-function PeriodicOptions({ options, value, onChange, kiosk }) {
-  const iconSize = kiosk ? 88 : 72;
-  return (
-    <div
-      role="radiogroup"
-      className="grid gap-4 justify-center [grid-template-columns:repeat(auto-fit,minmax(280px,280px))] max-w-[calc(4*280px+3*1rem)]"
-      style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", boxSizing: "border-box" }}
-    >
-      {(options || []).map((opt, i) => {
-        const sel = value === opt.id;
-        const col = PERIODIC_PALETTE[i % PERIODIC_PALETTE.length];
-        const iconPath = getAnswerIconPath(opt.label);
-        return (
-          <button
-            key={opt.id}
-            type="button"
-            role="radio"
-            aria-checked={sel ? "true" : "false"}
-            onClick={() => onChange(opt.id)}
-            className="relative w-full rounded-3xl transition-all text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-2"
-            style={{
-              background: TILE.bg,
-              border: `2px solid ${sel ? TILE.borderActive : TILE.border}`,
-              boxShadow: sel ? TILE.shadowActive : TILE.shadow,
-              transform: sel ? "translateY(-1px)" : "none",
-              color: BRAND.text,
-            }}
-          >
-            <div className="flex items-center gap-5" style={{ padding: kiosk ? 24 : 18 }}>
-              <div className="rounded-2xl shrink-0 grid place-items-center" style={{ width: iconSize, height: iconSize, background: col.bg }} aria-hidden="true">
-                {iconPath && <img src={iconPath} alt="" draggable="false" style={{ width: Math.round(iconSize * 0.7), height: Math.round(iconSize * 0.7), objectFit: "contain" }} />}
-              </div>
-              <div className={`${kiosk ? "text-2xl" : "text-xl"} font-semibold leading-snug`}>{opt.label}</div>
-            </div>
-            {sel && (
-              <div aria-hidden className="absolute top-3 right-3 rounded-full"
-                style={{ width: kiosk ? 26 : 22, height: kiosk ? 26 : 22, border: "2px solid rgba(21,50,71,.9)", background: "rgba(255,255,255,.9)", display: "grid", placeItems: "center", fontSize: kiosk ? 14 : 12, color: "#153247", fontWeight: 800 }}>
-                ✓
-              </div>
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
+// ---- icon mappers (public/icons/*.svg)
+function getGenderIconPath(label) {
+  const key = String(label || "").toLowerCase();
+  if (key.includes("female") || key.includes("woman") || key.includes("women")) return "/icons/female.svg";
+  if (key.includes("male") || key.includes("man") || key.includes("men")) return "/icons/male.svg";
+  if (key.includes("non-binary") || key.includes("nonbinary") || key.includes("non binary")) return "/icons/non-binary.svg";
+  if (key.includes("prefer not") || key.includes("rather not")) return "/icons/no.svg";
+  return "/icons/gender-unspecified.svg";
 }
-function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect = 2 }) {
-  const selectedSet = new Set(values);
-  const disabledAll = values.length >= maxSelect;
-  const iconSize = kiosk ? 88 : 72;
-  return (
-    <div role="group" className="grid gap-4 justify-items-stretch grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-      style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", boxSizing: "border-box" }}>
-      {(options || []).map((opt, i) => {
-        const sel = selectedSet.has(opt.id);
-        const canClick = sel || !disabledAll;
-        const col = PERIODIC_PALETTE[i % PERIODIC_PALETTE.length];
-        const iconPath = getAnswerIconPath(opt.label);
-        return (
-          <button
-            key={opt.id}
-            type="button"
-            aria-pressed={sel ? "true" : "false"}
-            onClick={() => canClick && onToggle(opt.id)}
-            className={`relative w-full rounded-3xl transition-all text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 ${canClick ? "cursor-pointer" : "opacity-60 cursor-not-allowed"}`}
-            style={{
-              background: TILE.bg,
-              border: `2px solid ${sel ? TILE.borderActive : TILE.border}`,
-              boxShadow: sel ? TILE.shadowActive : TILE.shadow,
-              transform: sel ? "translateY(-1px)" : "none",
-              color: BRAND.text,
-            }}
-          >
-            <div className="flex items-center gap-5" style={{ padding: kiosk ? 24 : 18 }}>
-              <div className="rounded-2xl shrink-0 grid place-items-center" style={{ width: iconSize, height: iconSize, background: col.bg }} aria-hidden="true">
-                {iconPath && <img src={iconPath} alt="" draggable="false" style={{ width: Math.round(iconSize * 0.7), height: Math.round(iconSize * 0.7), objectFit: "contain" }} />}
-              </div>
-              <div className={`${kiosk ? "text-2xl" : "text-xl"} font-semibold leading-snug`}>{opt.label}</div>
-            </div>
-            {sel && (
-              <div aria-hidden className="absolute top-3 right-3 rounded-full"
-                style={{ width: kiosk ? 26 : 22, height: kiosk ? 26 : 22, border: "2px solid rgba(21,50,71,.9)", background: "rgba(255,255,255,.9)", display: "grid", placeItems: "center", fontSize: kiosk ? 14 : 12, color: "#153247", fontWeight: 800 }}>
-                ✓
-              </div>
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-function AnswerChip({ selected, children, onClick, kiosk }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={selected}
-      className={`flex items-center justify-between w-full ${kiosk ? "p-6 text-xl" : "p-4 text-base"} rounded-2xl border mb-3 text-left`}
-      style={{ borderColor: selected ? BRAND.text : BRAND.border, boxShadow: selected ? `0 0 0 3px ${BRAND.text}33` : "none", color: BRAND.text, background: "transparent" }}
-    >
-      <span>{children}</span>
-      <span aria-hidden>{selected ? "✓" : ""}</span>
-    </button>
-  );
+
+function getAnswerIconPath(label) {
+  const key = String(label || "").toLowerCase();
+  if (key.includes("energy")) return "/icons/energy.svg";
+  if (key.includes("lifestyle")) return "/icons/lifestyle.svg";
+  if (key.includes("rest") || key.includes("sleep")) return "/icons/rest.svg";
+  if (key.includes("focus") || key.includes("memory") || key.includes("concentration")) return "/icons/memory.svg";
+  if (key.includes("immunity") || key.includes("immune")) return "/icons/immunity.svg";
+  if (key.includes("hair")) return "/icons/hair.svg";
+  if (key.includes("skin")) return "/icons/skin.svg";
+  if (key.includes("joint")) return "/icons/joint.svg";
+  if (key.includes("aging")) return "/icons/aging.svg";
+  if (key.includes("perform") || key.includes("endurance")) return "/icons/endurance.svg";
+  if (key.includes("positive") || key.includes("mood")) return "/icons/positive.svg";
+  if (key.includes("gut") || key.includes("digest")) return "/icons/digestion.svg";
+  if (key.includes("cardio") || key.includes("heart") || key.includes("cardiovascular")) return "/icons/heart.svg";
+  if (key.includes("menstrual")) return "/icons/menstrual.svg";
+  if (key.includes("menopause")) return "/icons/menopause.svg";
+  if (key.includes("libido")) return "/icons/libido.svg";
+  if (key.includes("weight")) return "/icons/weight.svg";
+  if (key.includes("stress")) return "/icons/stress.svg";
+	
+  // exercise set
+  if (key.includes("running")) return "/icons/running.svg";
+  if (key.includes("weights") || key.includes("strength")) return "/icons/weights.svg";
+  if (key.includes("classes") || key.includes("class")) return "/icons/classes.svg";
+  if (key.includes("sports") || key.includes("sport")) return "/icons/sports.svg";
+  if (key.includes("crossfit")) return "/icons/crossfit.svg";
+  if (key.includes("boxing")) return "/icons/boxing.svg";
+  if (key.includes("walking") || key.includes("walk")) return "/icons/walking.svg";
+  if (key.includes("other")) return "/icons/other.svg";
+  if (key.includes("none") || key === "no") return "/icons/cross.svg";
+  if (key === "yes") return "/icons/yes.svg";
+  if (key.includes("sometimes") || key.includes("maybe")) return "/icons/maybe.svg";
+
+  return "/icons/sparkles.svg"; // fallback
 }
 
 // ---- helpers
@@ -395,16 +226,21 @@ function normalizeOptionsFromAny(q, idx) {
   }
   return [];
 }
-const titleIncludes = (q, substr) => q?.title && String(q.title).toLowerCase().includes(String(substr).toLowerCase());
-const isNo = (val) => String(val ?? "").toLowerCase() === "no";
+function titleIncludes(q, substr) {
+  if (!q || !q.title) return false;
+  return String(q.title).toLowerCase().includes(String(substr).toLowerCase());
+}
+function isNo(val) {
+  return String(val ?? "").toLowerCase() === "no";
+}
 
-// ---- SCORING (robust)
+// ---- scoring helpers
 function buildOptionLabelIndex(questions) {
   // title -> { id -> label }
   const index = {};
   (questions || []).forEach((q) => {
     const map = {};
-    (q?.answers || []).forEach((a) => {
+    (q.answers || []).forEach((a) => {
       const id = String(a?.id ?? a?.value ?? a?.label ?? "");
       const label = String(a?.label ?? a?.name ?? a?.value ?? a?.id ?? id);
       if (id) map[id] = label;
@@ -416,94 +252,268 @@ function buildOptionLabelIndex(questions) {
 
 function scoreAnswers(answers, weightsMap, questions) {
   const tallies = {};
-  const add = (code, n = 1) => { if (!code) return; tallies[code] = (tallies[code] || 0) + n; };
-  if (!answers || !weightsMap) return tallies;
+  const add = (code, n = 1) => {
+    if (!code) return;
+    tallies[code] = (tallies[code] || 0) + n;
+  };
 
   const labelIndex = buildOptionLabelIndex(questions);
 
-  (questions || []).forEach((q) => {
-    try {
-      const qTitle = q?.title;
-      if (!qTitle) return;
+  Object.keys(weightsMap || {}).forEach((title) => {
+    const optionMap = weightsMap[title] || {};           // { "Really tired": ["Ecp"], ... }
+    let chosen = answers[title];                          // could be id, label, array, or number (slider)
+    if (chosen == null) return;
 
-      const found = findWeightsForTitle(weightsMap, qTitle);
-      if (!found) return;
+    // Helper: map an ID to its LABEL for this title (if needed)
+    const idToLabel = (v) => {
+      const vStr = String(v);
+      // If the weights already have vStr as a label key, keep it
+      if (Object.prototype.hasOwnProperty.call(optionMap, vStr)) return vStr;
+      // Otherwise, try translate id -> label via questions
+      const map = labelIndex[title] || {};
+      return map[vStr] || vStr;
+    };
 
-      const optionMap = found.map; // label -> [product codes]
-      const optionKeys = Object.keys(optionMap);
-      const optionMapNorm = new Map(optionKeys.map((lab) => [norm(lab), lab]));
+    // SLIDER mapping: numbers 1..5 need bucketing to the *first/last* weighted option
+    const mapSliderNumberToLabel = (num) => {
+      const keys = Object.keys(optionMap);
+      if (!keys.length) return null;
+      const low = keys[0];
+      const high = keys[keys.length - 1];
+      const n = Number(num);
+      if (Number.isNaN(n)) return null;
+      if (n <= 2) return low;      // lean to "low" end label (e.g., "Really tired")
+      if (n >= 4) return high;     // lean to "high" end label (e.g., "Full of beans")
+      return null;                 // middle (3) contributes nothing unless you want neutral weight
+    };
 
-      let chosen = answers[qTitle];
-      if (chosen == null) chosen = answers[q.id];
-      if (chosen == null) return;
-
-      const idToLabel = (v) => {
-        const vStr = String(v);
-        if (Object.prototype.hasOwnProperty.call(optionMap, vStr)) return vStr; // already a label
-        const lbl = (labelIndex[qTitle] || {})[vStr];
-        if (lbl && optionMap[lbl]) return lbl;
-        const fromNorm = optionMapNorm.get(norm(vStr));
-        return fromNorm || vStr;
-      };
-
-      let labels = [];
-      if (Array.isArray(chosen)) {
-        labels = chosen
-          .map(idToLabel)
-          .map((lab) => optionMapNorm.get(norm(lab)) || lab)
-          .filter((lab) => optionMap[lab]);
-      } else if (typeof chosen === "number" || /^[0-9]+$/.test(String(chosen))) {
-        const lab = sliderBucketLabel(optionMap, chosen);
-        if (lab && optionMap[lab]) labels = [lab];
-      } else {
-        const lab0 = idToLabel(chosen);
-        const lab = optionMapNorm.get(norm(lab0)) || lab0;
-        if (optionMap[lab]) labels = [lab];
-      }
-
-      labels.forEach((lab) => (optionMap[lab] || []).forEach((code) => add(code, 1)));
-    } catch {}
-  });
-
-  return tallies;
-}
-
-
-function pickWinner(tallies, answers, weightsMap) {
-  const order = Array.isArray(PRODUCT_ORDER) ? PRODUCT_ORDER : [];
-  if (!order.length) return null;
-
-  // max score
-  let max = -Infinity, leaders = [];
-  order.forEach((code) => {
-    const v = Number(tallies?.[code] || 0);
-    if (v > max) { max = v; leaders = [code]; }
-    else if (v === max) leaders.push(code);
-  });
-
-  if (!leaders.length) return null;
-  if (leaders.length === 1) return leaders[0];
-
-  // tie-break by priorities
-  const priMap = weightsMap?.[PRIORITIES_TITLE];
-  const priAns = answers?.[PRIORITIES_TITLE];
-  if (priMap && Array.isArray(priAns) && priAns.length) {
-    for (const opt of priAns) {
-      const match = (priMap[opt] || [])[0];
-      if (match && leaders.includes(match)) return match;
+    // Normalise chosen into an array of *labels* that exist in optionMap
+    let labels = [];
+    if (Array.isArray(chosen)) {
+      labels = chosen.map(idToLabel).filter((lab) => optionMap[lab]);
+    } else if (typeof chosen === "number" || /^[0-9]+$/.test(String(chosen))) {
+      const lab = mapSliderNumberToLabel(chosen);
+      if (lab && optionMap[lab]) labels = [lab];
+    } else {
+      const lab = idToLabel(chosen);
+      if (optionMap[lab]) labels = [lab];
     }
-  }
 
-  // stable fallback
-  return leaders.sort((a, b) => order.indexOf(a) - order.indexOf(b))[0] || null;
+    // Add weights for each mapped label
+    labels.forEach((lab) => (optionMap[lab] || []).forEach((code) => add(code, 1)));
+  });
+
+  return tallies; // e.g. { Eic: 3, Mjb: 2, ... }
 }
 
-// ---- Main component
+
+
+// ---- generic answer chip (legacy multi)
+function AnswerChip({ selected, children, onClick, kiosk }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={selected}
+      className={`flex items-center justify-between w-full ${kiosk ? "p-6 text-xl" : "p-4 text-base"} 
+        rounded-2xl border mb-3 text-left`}
+      style={{
+        borderColor: selected ? BRAND.text : BRAND.border,
+        boxShadow: selected ? `0 0 0 3px ${BRAND.text}33` : "none",
+        color: BRAND.text,
+        background: "transparent",
+      }}
+    >
+      <span>{children}</span>
+      <span aria-hidden>{selected ? "✓" : ""}</span>
+    </button>
+  );
+}
+
+// ---- Single-select icon tiles (centered, 4 per row max)
+function PeriodicOptions({ options, value, onChange, kiosk, getIconPath = getAnswerIconPath }) {
+  const iconSize = kiosk ? 88 : 72;
+  return (
+
+
+    <div
+      role="radiogroup"
+      className="grid gap-4 justify-center
+    [grid-template-columns:repeat(auto-fit,minmax(280px,280px))]
+    max-w-[calc(4*280px+3*1rem)]"
+      style={{
+        width: "90vw",
+        maxWidth: "90vw",
+        marginInline: "auto",
+        boxSizing: "border-box",
+	justifyContent: "center"
+      }}
+    >
+      {(options || []).map((opt, i) => {
+        const sel = value === opt.id;
+        const col = PERIODIC_PALETTE[i % PERIODIC_PALETTE.length];
+        const iconPath = getIconPath ? getIconPath(opt.label) : null;
+
+        return (
+          <button
+            key={opt.id}
+            type="button"
+            role="radio"
+            aria-checked={sel ? "true" : "false"}
+            onClick={() => onChange(opt.id)}
+            className="relative w-full rounded-3xl transition-all text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-2"
+            style={{
+              background: TILE.bg,
+              border: `2px solid ${sel ? TILE.borderActive : TILE.border}`,
+              boxShadow: sel ? TILE.shadowActive : TILE.shadow,
+              transform: sel ? "translateY(-1px)" : "none",
+              color: BRAND.text,
+            }}
+          >
+            <div className="flex items-center gap-5" style={{ padding: kiosk ? 24 : 18 }}>
+              <div
+                className="rounded-2xl shrink-0 grid place-items-center"
+                style={{ width: iconSize, height: iconSize, background: col.bg }}
+                aria-hidden="true"
+              >
+                {iconPath && (
+                  <img
+                    src={iconPath}
+                    alt=""
+                    draggable="false"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                    style={{ width: Math.round(iconSize * 0.7), height: Math.round(iconSize * 0.7), objectFit: "contain" }}
+                  />
+                )}
+              </div>
+              <div className={`${kiosk ? "text-2xl" : "text-xl"} font-semibold leading-snug`}>{opt.label}</div>
+            </div>
+
+            {sel && (
+              <div
+                aria-hidden
+                className="absolute top-3 right-3 rounded-full"
+                style={{
+                  width: kiosk ? 26 : 22,
+                  height: kiosk ? 26 : 22,
+                  border: "2px solid rgba(21,50,71,.9)",
+                  background: "rgba(255,255,255,.9)",
+                  display: "grid",
+                  placeItems: "center",
+                  fontSize: kiosk ? 14 : 12,
+                  color: "#153247",
+                  fontWeight: 800,
+                }}
+              >
+                ✓
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---- Multi-select icon tiles (limit 2)
+function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect = 2 }) {
+  const selectedSet = new Set(values);
+  const disabledAll = values.length >= maxSelect;
+  const iconSize = kiosk ? 88 : 72;
+
+  return (
+    <div
+      role="group"
+      className="grid gap-4 justify-items-stretch grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", boxSizing: "border-box" }}
+    >
+      {(options || []).map((opt, i) => {
+        const sel = selectedSet.has(opt.id);
+        const canClick = sel || !disabledAll;
+        const col = PERIODIC_PALETTE[i % PERIODIC_PALETTE.length];
+        const iconPath = getAnswerIconPath(opt.label);
+
+        return (
+          <button
+            key={opt.id}
+            type="button"
+            aria-pressed={sel ? "true" : "false"}
+            onClick={() => canClick && onToggle(opt.id)}
+            className={`relative w-full rounded-3xl transition-all text-left
+                        focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-2
+                        ${canClick ? "cursor-pointer" : "opacity-60 cursor-not-allowed"}`}
+            style={{
+              background: TILE.bg,
+              border: `2px solid ${sel ? TILE.borderActive : TILE.border}`,
+              boxShadow: sel ? TILE.shadowActive : TILE.shadow,
+              transform: sel ? "translateY(-1px)" : "none",
+              color: BRAND.text,
+            }}
+          >
+            <div className="flex items-center gap-5" style={{ padding: kiosk ? 24 : 18 }}>
+              <div
+                className="rounded-2xl shrink-0 grid place-items-center"
+                style={{ width: iconSize, height: iconSize, background: col.bg }}
+                aria-hidden="true"
+              >
+                {iconPath && (
+                  <img
+                    src={iconPath}
+                    alt=""
+                    draggable="false"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                    style={{
+                      width: Math.round(iconSize * 0.7),
+                      height: Math.round(iconSize * 0.7),
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                  />
+                )}
+              </div>
+
+              <div className={`${kiosk ? "text-2xl" : "text-xl"} font-semibold leading-snug`}>{opt.label}</div>
+            </div>
+
+            {sel && (
+              <div
+                aria-hidden
+                className="absolute top-3 right-3 rounded-full"
+                style={{
+                  width: kiosk ? 26 : 22,
+                  height: kiosk ? 26 : 22,
+                  border: "2px solid rgba(21,50,71,.9)",
+                  background: "rgba(255,255,255,.9)",
+                  display: "grid",
+                  placeItems: "center",
+                  fontSize: kiosk ? 14 : 12,
+                  color: "#153247",
+                  fontWeight: 800,
+                }}
+              >
+                ✓
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---- Priorities = Multi with icons (max 2) – just reuse above
+const PeriodicOptionsMultiWithIcons = PeriodicOptionsMulti;
+
+// ---- Main
 export default function QuizClient() {
   const { get } = useQueryParams();
   const kiosk = get("kiosk", "0") === "1";
   const context = get("context", "default");
-
+  const [weights, setWeights] = useState({});
+	
   useAutoResize();
 
   // Idle
@@ -511,19 +521,25 @@ export default function QuizClient() {
   const idleTimer = useRef(null);
   const IDLE_MS = kiosk ? 30000 : 120000;
 
-  // Data
+  // Steps / data
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState([]);
   const [error, setError] = useState(null);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [weights, setWeights] = useState({});
 
-  const resetAll = useCallback(() => { setAnswers({}); setStep(0); }, []);
+  const resetAll = useCallback(() => {
+    setAnswers({});
+    setStep(0);
+  }, []);
+
   const bumpIdle = useCallback(() => {
     setIdle(false);
     if (idleTimer.current) clearTimeout(idleTimer.current);
-    idleTimer.current = setTimeout(() => { setIdle(true); resetAll(); }, IDLE_MS);
+    idleTimer.current = setTimeout(() => {
+      setIdle(true);
+      resetAll();
+    }, IDLE_MS);
   }, [IDLE_MS, resetAll]);
 
   useEffect(() => {
@@ -533,133 +549,148 @@ export default function QuizClient() {
     return () => ["pointerdown", "keydown", "touchstart"].forEach((ev) => window.removeEventListener(ev, onAny));
   }, [bumpIdle]);
 
-  // Load questions
   const FALLBACK = [
-    { id: "goal", title: "What's your primary goal?", type: "single", options: ["Energy","Immunity","Skin & Hair","Sleep"], required: true },
+    {
+      id: "goal",
+      title: "What's your primary goal?",
+      type: "single",
+      options: ["Energy", "Immunity", "Skin & Hair", "Sleep"],
+      required: true,
+    },
   ];
 
+  // Load questions + robust type normalization
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    async function load() {
       try {
-        const res = await fetch(QUESTIONS_URL, { cache: "no-store" });
+        const res = await fetch("/boots_quiz_questions.json", { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const src = Array.isArray(data) ? data : [];
 
         const transformed = src.map((q, i) => {
-          const opts = normalizeOptionsFromAny(q, i);
-          const t = String(q.type || "").toLowerCase();
-          const typeMap = { slider: "slider", range: "slider", scale: "slider", likert: "slider" };
-          const inferred = !t && (!opts.length && (q.minLabel || q.maxLabel)) ? "slider" : (opts.length ? "single" : "single");
-          let qtype = typeMap[t] || inferred;
+  const opts = normalizeOptionsFromAny(q, i);
 
-          return {
-            id: String(q.id ?? `q_${i}`),
-            title: q.title ?? `Question ${i + 1}`,
-            type: qtype,
-            answers: opts,
-            minLabel: q.minLabel,
-            maxLabel: q.maxLabel,
-            required: qtype === "slider" ? false : true,
-          };
-        });
+  const t = String(q.type || "").toLowerCase();
+  const typeMap = { slider: "slider", range: "slider", scale: "slider", likert: "slider" };
+
+  // infer slider if no options and has min/max labels
+  const inferred = !t && (!opts.length && (q.minLabel || q.maxLabel)) ? "slider" : (opts.length ? "single" : "single");
+
+  let qtype = typeMap[t] || inferred;
+
+  // 🔒 hard guard: ensure the “How active…” question is always a slider
+  const qid = String(q.id ?? `q_${i}`);
+  if (qid === "feeling_activity_levels") {
+    qtype = "slider";
+  }
+
+  return {
+    id: qid,
+    title: q.title ?? `Question ${i + 1}`,
+    type: qtype,
+    answers: opts,
+    minLabel: q.minLabel,
+    maxLabel: q.maxLabel,
+    required: qtype === "slider" ? false : true,
+  };
+});
 
         if (!cancelled) setQuestions(transformed.length ? transformed : FALLBACK);
       } catch (e) {
-        if (!cancelled) { setError(String(e?.message || e)); setQuestions(FALLBACK); }
+        if (!cancelled) {
+          setError(String(e?.message || e));
+          setQuestions(FALLBACK);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
-    return () => { cancelled = true; };
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-// Load weightings (robust)
+	// Load weightings JSON for scoring
 useEffect(() => {
   let cancelled = false;
-
-  async function tryLoad(url) {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Fetch ${url} failed: HTTP ${res.status}`);
-    return res.json();
-  }
-
   (async () => {
     try {
-      let w = await tryLoad("/boots_quiz_weights.json");
+      const res = await fetch(WEIGHTS_URL, { cache: "no-store" });
+      const w = res.ok ? await res.json() : {};
       if (!cancelled) setWeights(w || {});
-    } catch (e1) {
-      console.error("[weights] primary failed:", e1);
-      try {
-        let w2 = await tryLoad("boots_quiz_weights.json"); // relative fallback
-        if (!cancelled) setWeights(w2 || {});
-      } catch (e2) {
-        console.error("[weights] fallback failed:", e2);
-        if (!cancelled) {
-          setWeights({});
-          // OPTIONAL: expose a visible note in results if you want
-          (window.__WEIGHTS_ERROR__ = String(e2?.message || e2));
-        }
-      }
+    } catch {
+      if (!cancelled) setWeights({});
     }
   })();
-
   return () => { cancelled = true; };
 }, []);
 
+const total = Array.isArray(questions) ? questions.length : 0;
+const isLoading = total === 0;                 // guard while questions load
+const isResults = total > 0 && step > total;   // only show results when we have questions
+const current = step === 0 ? null : questions[step - 1];
 
-  // Flow guards
-  const total = Array.isArray(questions) ? questions.length : 0;
-  const isLoading = total === 0;                 // wait for questions
-  const isResults = total > 0 && step > total;   // results only when we have questions
-  const current = step === 0 ? null : questions[step - 1];
+	useEffect(() => {
+  if (total === 0) return;
+  const maxStep = total + 1; // +1 is results page
+  if (step < 0 || step > maxStep) setStep(0);
+}, [total, step]);
 
-  useEffect(() => {
-    if (total === 0) return;
-    const maxStep = total + 1; // +1 results
-    if (step < 0 || step > maxStep) setStep(0);
-  }, [total, step]);
+function setAnswer(qid, value, mode = "single") {
+  setAnswers((prev) => {
+    const next = { ...prev };
+    const titleKey = current?.title; // current visible title
 
-  // Answer setter (stores by id AND by title)
-  function setAnswer(qid, value, mode = "single") {
-    setAnswers((prev) => {
-      const next = { ...prev };
-      const titleKey = current?.title;
-      const saveVal = (destKey) => {
-        if (!destKey) return;
-        if (mode === "multi") {
-          const set = new Set(Array.isArray(prev[destKey]) ? prev[destKey] : []);
-          set.has(value) ? set.delete(value) : set.add(value);
-          next[destKey] = Array.from(set);
-        } else if (mode === "multi-limit-2") {
-          const set = new Set(Array.isArray(prev[destKey]) ? prev[destKey] : []);
-          if (set.has(value)) set.delete(value);
-          else if (set.size < 2) set.add(value);
-          next[destKey] = Array.from(set);
-        } else {
-          next[destKey] = value;
-        }
-      };
-      saveVal(qid);
-      if (titleKey) saveVal(titleKey);
-      return next;
-    });
-  }
+    const saveVal = (destKey) => {
+      if (!destKey) return;
+      if (mode === "multi") {
+        const set = new Set(Array.isArray(prev[destKey]) ? prev[destKey] : []);
+        set.has(value) ? set.delete(value) : set.add(value);
+        next[destKey] = Array.from(set);
+      } else if (mode === "multi-limit-2") {
+        const set = new Set(Array.isArray(prev[destKey]) ? prev[destKey] : []);
+        if (set.has(value)) set.delete(value);
+        else if (set.size < 2) set.add(value);
+        next[destKey] = Array.from(set);
+      } else {
+        next[destKey] = value;
+      }
+    };
+
+    // store under qid (for navigation) and under the title (for scoring)
+    saveVal(qid);
+    if (titleKey) saveVal(titleKey);
+
+    return next;
+  });
+}
+
 
   function canContinue() {
     if (step === 0) return true;
     if (!current) return true;
     if (current.type === "slider") return true;
     if (current.required === false) return true;
-    const v = answers[current.id] ?? answers[current.title];
-    return Array.isArray(v) ? v.length > 0 : Boolean(v);
+    const v = answers[current.id];
+    if (isExercise(current)) return Array.isArray(v) && v.length > 0;
+    if (isPriorities(current)) return Array.isArray(v) && v.length > 0 && v.length <= 2;
+    return current.type === "multi" ? true : Boolean(v);
   }
 
-  // Simple skip example: if a "specific diet?" is No, skip "which diet?"
+  // Identify special titles
   const isSpecificDiet = (q) => titleIncludes(q, "specific diet");
-  const isWhichDiet    = (q) => titleIncludes(q, "which diet");
+  const isWhichDiet = (q) => titleIncludes(q, "which diet");
+  const isProcessed = (q) => titleIncludes(q, "how often do you consume processed food") || titleIncludes(q, "how often do you eat processed");
+  const isExercise = (q) => titleIncludes(q, "when you exercise") || titleIncludes(q, "what kind of exercise");
+  const isPriorities = (q) =>
+    String(q?.title || "") === "Which of the below are your top two priorities in the upcoming months?";
+  const isActiveWeek = (q) => titleIncludes(q, "how active are you in a typical week");
+  const isGender = (q) => /are you\b|gender/i.test(q?.title || "");
 
+  // Next with conditional skip (diet)
   const goNext = () => {
     setStep((s) => {
       if (s >= total) return total + 1;
@@ -668,14 +699,16 @@ useEffect(() => {
       let nextStep = s + 1;
 
       if (currQ && isSpecificDiet(currQ)) {
-        const ans = answers[currQ.id] ?? answers[currQ.title];
+        const ans = answers[currQ.id];
         const nextQ = questions[currIndex + 1];
         if (isNo(ans) && nextQ && isWhichDiet(nextQ)) nextStep = s + 2;
       }
+
       if (nextStep > total) return total + 1;
       return nextStep;
     });
   };
+
   const goBack = () => setStep((s) => Math.max(0, s - 1));
 
   return (
@@ -691,48 +724,118 @@ useEffect(() => {
     >
       {/* GLOBAL SLIDER STYLES */}
       <style jsx global>{`
-        .nourished-range { -webkit-appearance: none; appearance: none; width: 100%; height: 14px; border-radius: 7px; background: #ffffff; outline: none; }
-        .nourished-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 32px; height: 32px; border-radius: 50%; background: ${BRAND.text}; border: 2px solid #fff; box-shadow: 0 0 0 2px ${BRAND.text}; cursor: pointer; margin-top: -9px; }
-        .nourished-range::-webkit-slider-runnable-track { height: 14px; border-radius: 7px; background: transparent; }
-        .nourished-range::-moz-range-thumb { width: 32px; height: 32px; border-radius: 50%; background: ${BRAND.text}; border: 2px solid #fff; box-shadow: 0 0 0 2px ${BRAND.text}; cursor: pointer; }
-        .nourished-range::-moz-range-track { height: 14px; border-radius: 7px; background: transparent; }
+        .nourished-range {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 14px;
+          border-radius: 7px;
+          background: #ffffff;
+          outline: none;
+        }
+        .nourished-range:focus {
+          outline: none;
+        }
+        .nourished-range::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: ${BRAND.text};
+          border: 2px solid #fff;
+          box-shadow: 0 0 0 2px ${BRAND.text};
+          cursor: pointer;
+          margin-top: -9px;
+        }
+        .nourished-range::-webkit-slider-runnable-track {
+          height: 14px;
+          border-radius: 7px;
+          background: transparent;
+        }
+        .nourished-range::-moz-range-thumb {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: ${BRAND.text};
+          border: 2px solid #fff;
+          box-shadow: 0 0 0 2px ${BRAND.text};
+          cursor: pointer;
+        }
+        .nourished-range::-moz-range-track {
+          height: 14px;
+          border-radius: 7px;
+          background: transparent;
+        }
+        .nourished-range::-ms-thumb {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: ${BRAND.text};
+          border: 2px solid #fff;
+          box-shadow: 0 0 0 2px ${BRAND.text};
+          cursor: pointer;
+        }
+        .nourished-range::-ms-track {
+          height: 14px;
+          border-radius: 7px;
+          background: transparent;
+          border-color: transparent;
+          color: transparent;
+        }
       `}</style>
 
-      {/* Loading guard */}
-      {isLoading && (
-        <Stage kiosk={kiosk}>
-          <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
-            <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 12 }}>Loading quiz…</h2>
-            <div style={{ opacity: 0.7 }}>One moment while we fetch your questions.</div>
-          </div>
-        </Stage>
-      )}
-
+		{isLoading && (
+  <Stage kiosk={kiosk}>
+    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
+      <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 12 }}>
+        Loading quiz…
+      </h2>
+      <div style={{ opacity: 0.7 }}>One moment while we fetch your questions.</div>
+    </div>
+  </Stage>
+)}
       {/* idle attract */}
-      {!isLoading && kiosk && idle && !isResults && (
+      {kiosk && idle && !isResults && (
         <AttractScreen
           kiosk={kiosk}
-          onStart={() => { setIdle(false); setAnswers({}); setStep(1); }}
+          onStart={() => {
+            setIdle(false);
+            setAnswers({});
+            setStep(1);
+          }}
         />
       )}
 
       {/* main */}
-      {!isLoading && !isResults && !idle && (
+      {!isResults && !idle && (
         <>
           {step === 0 ? (
             <Stage kiosk={kiosk}>
               <div style={{ textAlign: "center" }}>
-                <img src="/nourished-formula-logo.svg" alt="Nourished Formula" className="h-auto mx-auto mb-6" draggable="false" style={{ width: "min(66%, 480px)", marginBottom: "8%" }} />
-                <h1 className={kiosk ? "text-5xl" : "text-4xl"} style={{ fontWeight: 700, marginBottom: 12 }}>Find your perfect stack</h1>
+                <img
+                  src="/nourished-formula-logo.svg"
+                  alt="Nourished Formula"
+                  className="h-auto mx-auto mb-6"
+                  draggable="false"
+                  style={{ width: "min(66%, 480px)", marginBottom: "8%" }}
+                />
+                <h1 className={kiosk ? "text-5xl" : "text-4xl"} style={{ fontWeight: 700, marginBottom: 12 }}>
+                  Find your perfect stack
+                </h1>
                 <p className={kiosk ? "text-xl" : "text-lg"} style={{ opacity: 0.85, marginBottom: 24 }}>
                   Answer a few quick questions and we’ll match you to the right Nourished formula.
                 </p>
                 <div className="mx-auto" style={{ maxWidth: 360 }}>
-                  <Button kiosk={kiosk} onClick={() => setStep(1)} bg="#e2c181" textColor="#153247">Get Started</Button>
+                  <Button kiosk={kiosk} onClick={() => setStep(1)} bg="#e2c181" textColor="#153247">
+                    Get Started
+                  </Button>
                 </div>
                 <p style={{ fontWeight: 300, marginTop: 40, fontSize: 12 }}>
                   Please note: This quiz is designed to help you select a personalised vitamin stack based on your
-                  lifestyle and wellness goals. It is not intended to diagnose or treat any medical condition.
+                  lifestyle and wellness goals. It is not intended to diagnose or treat any medical condition. If you
+                  are pregnant, breastfeeding, taking medication or under medical supervision, please consult a
+                  healthcare professional before taking any supplements.
                 </p>
               </div>
             </Stage>
@@ -740,43 +843,141 @@ useEffect(() => {
             <Stage kiosk={kiosk}>
               {!loading && current && (
                 <section style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto" }}>
-                  <h2 className={kiosk ? "text-5xl" : "text-3xl"} style={{ fontWeight: 700, marginBottom: kiosk ? 36 : 28, textAlign: "center", lineHeight: 1.15 }}>
-                    {current.title}
-                  </h2>
+                  {/* Titles */}
+                  {isProcessed(current) ? (
+                    <>
+                      <h2
+                        className={kiosk ? "text-5xl" : "text-3xl"}
+                        style={{ fontWeight: 700, marginBottom: kiosk ? 12 : 10, textAlign: "center", lineHeight: 1.15 }}
+                      >
+                        How often do you eat processed foods in a typical day?
+                      </h2>
+                      <p
+                        style={{
+                          textAlign: "center",
+                          opacity: 0.75,
+                          fontSize: kiosk ? "1.25rem" : "1rem",
+                          marginBottom: kiosk ? 40 : 28,
+                          maxWidth: 700,
+                          marginInline: "auto",
+                        }}
+                      >
+                        For example: ready meals, crisps, biscuits, packaged snacks, sugary cereals, or processed meats
+                      </p>
+                    </>
+                  ) : (
+                    <h2
+                      className={kiosk ? "text-5xl" : "text-3xl"}
+                      style={{ fontWeight: 700, marginBottom: kiosk ? 36 : 28, textAlign: "center", lineHeight: 1.15 }}
+                    >
+                      {current.title}
+                    </h2>
+                  )}
 
-                  {/* body */}
+                  {/* Body */}
                   {(() => {
-                    // slider?
-                    if (current.type === "slider") {
-                      const val = Number(answers[current.id] ?? answers[current.title] ?? 3);
-                      const fillPct = Math.max(0, Math.min(100, ((val - 1) / 4) * 100)); // 1..5 -> 0..100%
+                    // priorities (multi icons, max 2)
+                    if (isPriorities(current)) {
+                      const vals = Array.isArray(answers[current.id]) ? answers[current.id] : [];
+                      return (
+                        <PeriodicOptionsMultiWithIcons
+                          options={current.answers}
+                          values={vals}
+                          onToggle={(id) => setAnswer(current.id, id, "multi-limit-2")}
+                          kiosk={kiosk}
+                          maxSelect={2}
+                        />
+                      );
+                    }
+                    // slider (robust) or specific active-week title
+                    if (current.type === "slider" || isActiveWeek(current)) {
+                      const val = Number(answers[current.id] || 3);
+                      const fillPct = Math.max(0, Math.min(100, ((val - 1) / 4) * 100)); // 1..5 → 0..100%
                       return (
                         <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto" }}>
-                          <div className="flex justify-between" style={{ fontSize: kiosk ? "1.5rem" : "1.1rem", fontWeight: 700, marginBottom: 16 }}>
+                          <div
+                            className="flex justify-between"
+                            style={{ fontSize: kiosk ? "1.5rem" : "1.1rem", fontWeight: 700, marginBottom: 16 }}
+                          >
                             <span>{current.minLabel || "Low"}</span>
                             <span>{current.maxLabel || "High"}</span>
                           </div>
                           <input
-                            type="range" min="1" max="5" step="1"
+                            type="range"
+                            min="1"
+                            max="5"
+                            step="1"
                             value={val}
                             onChange={(e) => setAnswer(current.id, Number(e.target.value), "slider")}
                             aria-label={current.title}
                             className="nourished-range"
-                            style={{ width: "100%", background: `linear-gradient(to right, ${BRAND.text} 0%, ${BRAND.text} ${fillPct}%, #ffffff ${fillPct}%, #ffffff 100%)` }}
+                            style={{
+                              width: "100%",
+                              background: `linear-gradient(to right, ${BRAND.text} 0%, ${BRAND.text} ${fillPct}%, #ffffff ${fillPct}%, #ffffff 100%)`,
+                            }}
                           />
                         </div>
                       );
                     }
 
-                    // multi?
-                    if (current.type === "multi") {
-                      const vals = Array.isArray(answers[current.id] ?? answers[current.title]) ? (answers[current.id] ?? answers[current.title]) : [];
+                    // gender → single with gender icons
+                    if (isGender(current)) {
                       return (
-                        <div role="group" style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto" }}>
+                        <PeriodicOptions
+                          options={current.answers}
+                          value={answers[current.id] || ""}
+                          onChange={(val) => setAnswer(current.id, val, "single")}
+                          kiosk={kiosk}
+                          getIconPath={getGenderIconPath}
+                        />
+                      );
+                    }
+
+                    // processed → single tiles
+                    if (isProcessed(current)) {
+                      return (
+                        <PeriodicOptions
+                          options={current.answers}
+                          value={answers[current.id] || ""}
+                          onChange={(val) => setAnswer(current.id, val, "single")}
+                          kiosk={kiosk}
+                        />
+                      );
+                    }
+
+                    // exercise → multi (max 2)
+                    if (isExercise(current)) {
+                      const vals = Array.isArray(answers[current.id]) ? answers[current.id] : [];
+                      return (
+                        <PeriodicOptionsMulti
+                          options={current.answers}
+                          values={vals}
+                          onToggle={(id) => setAnswer(current.id, id, "multi-limit-2")}
+                          kiosk={kiosk}
+                          maxSelect={2}
+                        />
+                      );
+                    }
+
+
+
+                    // default multi (legacy chips)
+                    if (current.type === "multi") {
+                      return (
+                        <div
+                          role="group"
+                          aria-labelledby={`q-${current.id}`}
+                          style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto" }}
+                        >
                           {(current.answers || []).map((a) => {
-                            const selected = vals.includes(a.id);
+                            const selected = (answers[current.id] || []).includes(a.id);
                             return (
-                              <AnswerChip key={a.id} kiosk={kiosk} selected={selected} onClick={() => setAnswer(current.id, a.id, "multi")}>
+                              <AnswerChip
+                                key={a.id}
+                                kiosk={kiosk}
+                                selected={selected}
+                                onClick={() => setAnswer(current.id, a.id, "multi")}
+                              >
                                 {a.label}
                               </AnswerChip>
                             );
@@ -785,11 +986,11 @@ useEffect(() => {
                       );
                     }
 
-                    // default single
+                    // default single → icon tiles
                     return (
                       <PeriodicOptions
                         options={current.answers}
-                        value={(answers[current.id] ?? answers[current.title]) || ""}
+                        value={answers[current.id] || ""}
                         onChange={(val) => setAnswer(current.id, val, "single")}
                         kiosk={kiosk}
                       />
@@ -797,8 +998,13 @@ useEffect(() => {
                   })()}
 
                   {/* nav */}
-                  <div className="mt-6 grid grid-cols-2 gap-3" style={{ width: "min(720px, 90vw)", marginInline: "auto" }}>
-                    <Button kiosk={kiosk} onClick={goBack} disabled={step === 0}>Back</Button>
+                  <div
+                    className="mt-6 grid grid-cols-2 gap-3"
+                    style={{ width: "min(720px, 90vw)", marginInline: "auto" }}
+                  >
+                    <Button kiosk={kiosk} onClick={goBack} disabled={step === 0}>
+                      Back
+                    </Button>
                     <Button kiosk={kiosk} onClick={goNext} disabled={!canContinue()}>
                       {step === total ? "See results" : "Continue"}
                     </Button>
@@ -818,126 +1024,75 @@ useEffect(() => {
       )}
 
       {/* results */}
-      {!isLoading && isResults && (
-        <Stage kiosk={kiosk}>
-          <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
-            <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
-              Your recommendation
-            </h2>
-{/* Diagnostics panel */}
-<div
-  className="mx-auto mb-4 rounded-xl border p-3 text-left text-xs"
-  style={{ width: "min(1000px, 92vw)", borderColor: BRAND.border, background: "rgba(255,255,255,0.7)" }}
->
-  <strong>Diagnostics</strong>
-  <div style={{ marginTop: 6 }}>
-    <div><b>Weights titles (count):</b> {Object.keys(weights || {}).length}</div>
-    <div style={{ marginTop: 6 }}>
-      <details open>
-        <summary style={{ cursor: "pointer" }}>First 20 weights titles</summary>
-        <pre style={{ whiteSpace: "pre-wrap" }}>
-{JSON.stringify(Object.keys(weights || {}).slice(0, 20), null, 2)}
-        </pre>
-      </details>
-    </div>
-    <div style={{ marginTop: 6 }}>
-      <details open>
-        <summary style={{ cursor: "pointer" }}>Per-question mapping</summary>
-        <pre style={{ whiteSpace: "pre-wrap" }}>
-{(() => {
-  try {
-    const rows = diagnoseMapping(answers, weights, questions);
-    return JSON.stringify(rows, null, 2);
-  } catch (e) {
-    return "diag error: " + String(e?.message || e);
-  }
-})()}
-        </pre>
-      </details>
-    </div>
-  </div>
-</div>
-            {/* Optional debug panel: add ?debug=1 to see it */}
-            {DEBUG_SCORING && (
-              <div
-                className="mx-auto mb-4 rounded-xl border p-3 text-left text-xs"
-                style={{ width: "min(860px, 92vw)", borderColor: BRAND.border, background: "rgba(255,255,255,0.6)" }}
-              >
-                <strong>Debug:</strong>
-                <pre style={{ whiteSpace: "pre-wrap", marginTop: 8 }}>
-{(() => {
-  try {
-    const t = scoreAnswers(answers, weights, questions);
-    return JSON.stringify({ answeredKeys: Object.keys(answers || {}), tallies: t, questionCount: questions?.length || 0 }, null, 2);
-  } catch (e) {
-    return "error: " + String(e?.message || e);
-  }
-})()}
-                </pre>
+{isResults && (
+  <Stage kiosk={kiosk}>
+    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
+      <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
+        Your recommendation
+      </h2>
+
+      {(() => {
+        const tallies = scoreAnswers(answers, weights, questions);
+        const winner = pickWinner(tallies, answers, weights);
+
+        return (
+          <>
+            <div
+              className="mx-auto mb-6 rounded-3xl border p-6"
+              style={{ width: "min(560px, 92vw)", borderColor: BRAND.border }}
+            >
+              <div className="text-6xl font-extrabold mb-2" style={{ color: BRAND.text }}>
+                {winner || "—"}
               </div>
-            )}
+              <div style={{ opacity: 0.75 }}>
+                {winner ? "Top match based on your answers." : "No result yet — please answer the questions."}
+              </div>
 
-            {(() => {
-              try {
-                if (!weights || !Object.keys(weights).length) {
-                  return <div style={{ marginBottom: 16, opacity: 0.85 }}>Loading scoring data…</div>;
-                }
-
-                const tallies = scoreAnswers(answers, weights, questions);
-                const winner = pickWinner(tallies, answers, weights);
-
-                return (
-                  <>
-                    <div className="mx-auto mb-6 rounded-3xl border p-6" style={{ width: "min(560px, 92vw)", borderColor: BRAND.border }}>
-                      <div className="text-6xl font-extrabold mb-2" style={{ color: BRAND.text }}>{winner || "—"}</div>
-                      <div style={{ opacity: 0.75 }}>
-                        {winner ? "Top match based on your answers." : "No result yet — please answer the questions."}
+              {Object.values(tallies).some((v) => v > 0) && (
+                <div className="mt-4 text-left text-sm">
+                  {Object.entries(tallies)
+                    .filter(([_, v]) => v > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([code, v]) => (
+                      <div key={code} className="flex justify-between">
+                        <span>{code}</span><span>{v}</span>
                       </div>
+                    ))}
+                </div>
+              )}
+            </div>
 
-                      {Object.values(tallies || {}).some((v) => v > 0) && (
-                        <div className="mt-4 text-left text-sm">
-                          {Object.entries(tallies)
-                            .filter(([_, v]) => v > 0)
-                            .sort((a, b) => b[1] - a[1])
-                            .map(([code, v]) => (
-                              <div key={code} className="flex justify-between">
-                                <span>{code}</span><span>{v}</span>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
+            <div className="grid gap-3" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
+              <Button
+                kiosk={kiosk}
+                onClick={() => {
+                  postToParent({ type: "NOURISHED_QUIZ_EVENT", event: "results_continue_clicked", payload: { winner } });
+                }}
+              >
+                Continue
+              </Button>
+              <Button
+                kiosk={kiosk}
+                onClick={() => {
+                  setAnswers({});
+                  setStep(0);
+                  setIdle(false);
+                }}
+              >
+                Restart
+              </Button>
+            </div>
+          </>
+        );
+      })()}
 
-                    <div className="grid gap-3" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
-                      <Button
-                        kiosk={kiosk}
-                        onClick={() => {
-                          postToParent({ type: "NOURISHED_QUIZ_EVENT", event: "results_continue_clicked", payload: { winner } });
-                        }}
-                      >
-                        Continue
-                      </Button>
-                      <Button
-                        kiosk={kiosk}
-                        onClick={() => { setAnswers({}); setStep(0); setIdle(false); }}
-                      >
-                        Restart
-                      </Button>
-                    </div>
-            </>
-                );
-              } catch (err) {
-                console.error("Results render error:", err);
-                return <div style={{ marginBottom: 16, color: "#b91c1c" }}>Sorry — something went wrong rendering results.</div>;
-              }
-            })()}
+      <p className="text-xs" style={{ opacity: 0.6, marginTop: 16 }}>
+        Context: <code>{context}</code>
+      </p>
+    </div>
+  </Stage>
+)}
 
-            <p className="text-xs" style={{ opacity: 0.6, marginTop: 16 }}>
-              Context: <code>{context}</code>
-            </p>
-          </div>
-        </Stage>
-      )}
 
       <div className="h-4" aria-hidden />
     </div>
