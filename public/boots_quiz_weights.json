@@ -1,0 +1,147 @@
+{
+  "How old are you?": {
+    "56+": [
+      "Bmca"
+    ]
+  },
+  "Tiredness": {
+    "Really tired": [
+      "Ecp"
+    ]
+  },
+  "Activity levels": {
+    "Not very active": [
+      "Meca"
+    ],
+    "Gym junkie": [
+      "Bmca"
+    ]
+  },
+  "Sleep": {
+    "Sleepness nights": [
+      "Rnp"
+    ]
+  },
+  "Screen time": {
+    "Lots of screen time": [
+      "Cpe"
+    ]
+  },
+  "When you exercise, what do you do": {
+    "Running or Cardio": [
+      "Mjb"
+    ],
+    "Weights": [
+      "Mjb"
+    ],
+    "Crossfit/Hyrox": [
+      "Mjb"
+    ],
+    "Boxing": [
+      "Mjb"
+    ],
+    "None": [
+      "Meca"
+    ]
+  },
+  "How quickly do you recover from strenious activity or excercise ? (such as muscle soreness, stiffness)": {
+    "Over 5 days": [
+      "Mjb"
+    ]
+  },
+  "Which Diet": {
+    "Low carb": [
+      "Gsi"
+    ],
+    "Low fat": [
+      "Meca"
+    ],
+    "Vegetarian": [
+      "Eic"
+    ],
+    "Vegan": [
+      "Eic"
+    ],
+    "Pescatarian": [
+      "Ecp"
+    ],
+    "Dairy free": [
+      "Bmca"
+    ],
+    "Gluten free": [
+      "Eic"
+    ],
+    "I am currenly taking GLP-1s": [
+      "Gsi"
+    ],
+    "Calorie Restricted Diet": [
+      "Gsi"
+    ]
+  },
+  "During the day, do you get hungry or have energy dips between meals?": {
+    "Yes": [
+      "Meca"
+    ],
+    "Sometimes": [
+      "Meca"
+    ]
+  },
+  "How often do you consume processed food in an average day (for example: ready meals, crisps, biscuits, packaged snacks, sugary cereals, or processed meats)": {
+    "3-4 times a day": [
+      "Bmca"
+    ],
+    "5+ times": [
+      "Gsi"
+    ]
+  },
+  "Which of the below are your top two priorities in the upcoming months?": {
+    "Support with Stress": [
+      "Epi"
+    ],
+    "More energy": [
+      "Ecp"
+    ],
+    "Better immunity": [
+      "Eic"
+    ],
+    "Better focus & memory": [
+      "Cpe"
+    ],
+    "Improve skin / Reduce Wrinkle": [
+      "Spe"
+    ],
+    "Healthier hair & nails": [
+      "Shp"
+    ],
+    "Menstrual cycle health": [
+      "Hpes"
+    ],
+    "Support  during menopause": [
+      "hcb"
+    ],
+    "Gut health & digestion": [
+      "Gsi"
+    ],
+    "Weight Maintenance": [
+      "Bmca"
+    ],
+    "Feel more rested and refreshed": [
+      "Rnp"
+    ],
+    "Bone & joint health": [
+      "Mjb"
+    ],
+    "Support a positive mood": [
+      "Epi"
+    ],
+    "Support healthy aging": [
+      "Mjb"
+    ],
+    "Cardiovascular health": [
+      "Bmca"
+    ],
+    "Improve performance, endurance & recovery": [
+      "Mjb"
+    ]
+  }
+}

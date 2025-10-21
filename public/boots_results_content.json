@@ -1,0 +1,67 @@
+{
+  "Eic": {
+    "name": "EIC \u2014 Immunity",
+    "tagline": "Daily immune support with beta-glucans, vitamins C & D, and iron.",
+    "cta": "/products/eic"
+  },
+  "Epi": {
+    "name": "EPI \u2014 Positive Mood",
+    "tagline": "Support a balanced mood and psychological function.",
+    "cta": "/products/epi"
+  },
+  "Meca": {
+    "name": "MECA \u2014 Metabolism & Weight",
+    "tagline": "Smart support for weight maintenance and metabolic balance.",
+    "cta": "/products/meca"
+  },
+  "Ecp": {
+    "name": "ECP \u2014 Energy",
+    "tagline": "Sustained energy and reduced tiredness.",
+    "cta": "/products/ecp"
+  },
+  "Cpe": {
+    "name": "CPE \u2014 Focus & Memory",
+    "tagline": "Cognitive support for focus and memory.",
+    "cta": "/products/cpe"
+  },
+  "hcb": {
+    "name": "HCB \u2014 Menopause Support",
+    "tagline": "Daily support during menopause.",
+    "cta": "/products/hcb"
+  },
+  "Hpes": {
+    "name": "HPES \u2014 Cycle Support",
+    "tagline": "Support for menstrual cycle health.",
+    "cta": "/products/hpes"
+  },
+  "Rnp": {
+    "name": "RNP \u2014 Rest & Recovery",
+    "tagline": "Sleep quality and waking refreshed.",
+    "cta": "/products/rnp"
+  },
+  "Bmca": {
+    "name": "BMCA \u2014 Heart & Weight",
+    "tagline": "Cardiovascular health and weight maintenance.",
+    "cta": "/products/bmca"
+  },
+  "Mjb": {
+    "name": "MJB \u2014 Joints & Performance",
+    "tagline": "Joint comfort, endurance and recovery.",
+    "cta": "/products/mjb"
+  },
+  "Spe": {
+    "name": "SPE \u2014 Skin",
+    "tagline": "Skin health and wrinkle reduction.",
+    "cta": "/products/spe"
+  },
+  "Shp": {
+    "name": "SHP \u2014 Hair & Nails",
+    "tagline": "Healthier hair and nails.",
+    "cta": "/products/shp"
+  },
+  "Gsi": {
+    "name": "GSI \u2014 Gut",
+    "tagline": "Gut health and digestion.",
+    "cta": "/products/gsi"
+  }
+}
