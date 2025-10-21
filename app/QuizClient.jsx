@@ -1133,7 +1133,7 @@ function setAnswer(qid, value, mode = "single") {
       <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
         Your recommendation
       </h2>
-DEBUG_SCORING && (
+		{DEBUG_SCORING && (
   <div
     className="mx-auto mb-4 rounded-xl border p-3 text-left text-xs"
     style={{ width: "min(860px, 92vw)", borderColor: BRAND.border, background: "rgba(255,255,255,0.6)" }}
