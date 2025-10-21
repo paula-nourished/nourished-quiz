@@ -234,6 +234,24 @@ function isNo(val) {
   return String(val ?? "").toLowerCase() === "no";
 }
 
+// ---- debug flag from URL (?debug=1)
+function getDebugFlag() {
+  try {
+    const usp = new URLSearchParams(window.location.search);
+    return usp.get("debug") === "1";
+  } catch { return false; }
+}
+const DEBUG_SCORING = typeof window !== "undefined" ? getDebugFlag() : false;
+
+// ---- title/label normaliser
+function norm(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[’'"]/g, "'")
+    .trim();
+}
+
 // ---- scoring helpers
 function buildOptionLabelIndex(questions) {
   // title -> { id -> label }
@@ -250,61 +268,117 @@ function buildOptionLabelIndex(questions) {
   return index;
 }
 
+// ---- build index: title -> { id -> label }
+function buildOptionLabelIndex(questions) {
+  const index = {};
+  (questions || []).forEach((q) => {
+    const inner = {};
+    (q?.answers || []).forEach((a) => {
+      const id = String(a?.id ?? a?.value ?? a?.label ?? "");
+      const label = String(a?.label ?? a?.name ?? a?.value ?? a?.id ?? id);
+      if (id) inner[id] = label;
+    });
+    if (q?.title) index[q.title] = inner;
+  });
+  return index;
+}
+
+// ---- robust scorer: handles title mismatches, id->label, sliders
 function scoreAnswers(answers, weightsMap, questions) {
   const tallies = {};
-  const add = (code, n = 1) => {
-    if (!code) return;
-    tallies[code] = (tallies[code] || 0) + n;
-  };
+  const add = (code, n = 1) => { if (!code) return; tallies[code] = (tallies[code] || 0) + n; };
+
+  if (!answers || !weightsMap) return tallies;
 
   const labelIndex = buildOptionLabelIndex(questions);
 
-  Object.keys(weightsMap || {}).forEach((title) => {
-    const optionMap = weightsMap[title] || {};           // { "Really tired": ["Ecp"], ... }
-    let chosen = answers[title];                          // could be id, label, array, or number (slider)
-    if (chosen == null) return;
+  // Build a quick lookup of weights by normalised title
+  const weightEntries = Object.entries(weightsMap || {});
+  const weightsNorm = new Map(weightEntries.map(([t, map]) => [norm(t), { title: t, map }]));
 
-    // Helper: map an ID to its LABEL for this title (if needed)
-    const idToLabel = (v) => {
-      const vStr = String(v);
-      // If the weights already have vStr as a label key, keep it
-      if (Object.prototype.hasOwnProperty.call(optionMap, vStr)) return vStr;
-      // Otherwise, try translate id -> label via questions
-      const map = labelIndex[title] || {};
-      return map[vStr] || vStr;
-    };
+  // helper: find weights for a given question title (exact or fuzzy)
+  const findWeightsForTitle = (qTitle) => {
+    const n = norm(qTitle);
+    const exact = weightsNorm.get(n);
+    if (exact) return exact;
 
-    // SLIDER mapping: numbers 1..5 need bucketing to the *first/last* weighted option
-    const mapSliderNumberToLabel = (num) => {
-      const keys = Object.keys(optionMap);
-      if (!keys.length) return null;
-      const low = keys[0];
-      const high = keys[keys.length - 1];
-      const n = Number(num);
-      if (Number.isNaN(n)) return null;
-      if (n <= 2) return low;      // lean to "low" end label (e.g., "Really tired")
-      if (n >= 4) return high;     // lean to "high" end label (e.g., "Full of beans")
-      return null;                 // middle (3) contributes nothing unless you want neutral weight
-    };
-
-    // Normalise chosen into an array of *labels* that exist in optionMap
-    let labels = [];
-    if (Array.isArray(chosen)) {
-      labels = chosen.map(idToLabel).filter((lab) => optionMap[lab]);
-    } else if (typeof chosen === "number" || /^[0-9]+$/.test(String(chosen))) {
-      const lab = mapSliderNumberToLabel(chosen);
-      if (lab && optionMap[lab]) labels = [lab];
-    } else {
-      const lab = idToLabel(chosen);
-      if (optionMap[lab]) labels = [lab];
+    // fuzzy: contains either direction
+    for (const [kn, obj] of weightsNorm.entries()) {
+      if (n.includes(kn) || kn.includes(n)) return obj;
     }
+    return null; // no mapping
+  };
 
-    // Add weights for each mapped label
-    labels.forEach((lab) => (optionMap[lab] || []).forEach((code) => add(code, 1)));
+  // slider bucket helper: 1-2 => first key, 4-5 => last key, 3 => neutral
+  const sliderBucketLabel = (optionMap, value) => {
+    const keys = Object.keys(optionMap || {});
+    if (!keys.length) return null;
+    const low = keys[0];
+    const high = keys[keys.length - 1];
+    const n = Number(value);
+    if (!Number.isFinite(n)) return null;
+    if (n <= 2) return low;
+    if (n >= 4) return high;
+    return null;
+  };
+
+  // Walk every quiz question (so we can read q.id or q.title reliably)
+  (questions || []).forEach((q) => {
+    try {
+      const qTitle = q?.title;
+      if (!qTitle) return;
+
+      // locate the weight block for this question
+      const found = findWeightsForTitle(qTitle);
+      if (!found) {
+        if (DEBUG_SCORING) console.debug("[score] no weights for title:", qTitle);
+        return;
+      }
+      const optionMap = found.map; // e.g., { "Really tired": ["Ecp"], "Full of beans": [] }
+
+      // read the user's answer: prefer title key, else id key
+      let chosen = answers[qTitle];
+      if (chosen == null) chosen = answers[q.id];
+
+      if (chosen == null) {
+        if (DEBUG_SCORING) console.debug("[score] no answer for:", qTitle);
+        return;
+      }
+
+      // translate an id -> label for this question, if needed
+      const idToLabel = (v) => {
+        const vStr = String(v);
+        if (Object.prototype.hasOwnProperty.call(optionMap, vStr)) return vStr; // already a label
+        const map = labelIndex[qTitle] || {};
+        return map[vStr] || vStr;
+      };
+
+      // normalise to an array of labels that exist in the weight map
+      let labels = [];
+      if (Array.isArray(chosen)) {
+        labels = chosen.map(idToLabel).filter((lab) => optionMap[lab]);
+      } else if (typeof chosen === "number" || /^[0-9]+$/.test(String(chosen))) {
+        const lab = sliderBucketLabel(optionMap, chosen);
+        if (lab && optionMap[lab]) labels = [lab];
+      } else {
+        const lab = idToLabel(chosen);
+        if (optionMap[lab]) labels = [lab];
+      }
+
+      if (!labels.length && DEBUG_SCORING) {
+        console.debug("[score] no label match:", { qTitle, chosen, optionMap: Object.keys(optionMap) });
+      }
+
+      // apply weights
+      labels.forEach((lab) => (optionMap[lab] || []).forEach((code) => add(code, 1)));
+    } catch (e) {
+      if (DEBUG_SCORING) console.warn("[score] skip question due to error:", q?.title, e);
+    }
   });
 
-  return tallies; // e.g. { Eic: 3, Mjb: 2, ... }
+  return tallies;
 }
+
 
 function pickWinner(tallies, answers, weightsMap) {
   const order = Array.isArray(PRODUCT_ORDER) ? PRODUCT_ORDER : [];
@@ -1059,7 +1133,24 @@ function setAnswer(qid, value, mode = "single") {
       <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
         Your recommendation
       </h2>
-
+DEBUG_SCORING && (
+  <div
+    className="mx-auto mb-4 rounded-xl border p-3 text-left text-xs"
+    style={{ width: "min(860px, 92vw)", borderColor: BRAND.border, background: "rgba(255,255,255,0.6)" }}
+  >
+    <strong>Debug:</strong>
+    <pre style={{ whiteSpace: "pre-wrap" }}>
+      {(() => {
+        try {
+          const t = scoreAnswers(answers, weights, questions);
+          return JSON.stringify({ answeredKeys: Object.keys(answers || {}), tallies: t }, null, 2);
+        } catch (e) {
+          return "error: " + String(e?.message || e);
+        }
+      })()}
+    </pre>
+  </div>
+)}
       {(() => {
         const tallies = scoreAnswers(answers, weights, questions);
         const winner = pickWinner(tallies, answers, weights);
