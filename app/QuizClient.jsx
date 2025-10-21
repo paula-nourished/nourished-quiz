@@ -20,7 +20,7 @@ const BRAND = {
 };
 
 // ---- scoring config
-const WEIGHTS_URL = "/boots_quiz_weights.json"; // put the JSON file in /public
+const WEIGHTS_URL = "boots_quiz_weights.json"; // put the JSON file in /public
 
 // Stable order for tie-breaking
 const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
@@ -645,20 +645,23 @@ export default function QuizClient() {
     };
   }, []);
 
-	// Load weightings JSON for scoring
+// ---- Load weightings JSON for scoring (with error logging)
 useEffect(() => {
   let cancelled = false;
   (async () => {
     try {
       const res = await fetch(WEIGHTS_URL, { cache: "no-store" });
-      const w = res.ok ? await res.json() : {};
+      if (!res.ok) throw new Error(`weights fetch HTTP ${res.status} at ${WEIGHTS_URL}`);
+      const w = await res.json();
       if (!cancelled) setWeights(w || {});
-    } catch {
+    } catch (e) {
+      console.warn("⚠️ Failed to load weights:", e);
       if (!cancelled) setWeights({});
     }
   })();
   return () => { cancelled = true; };
 }, []);
+
 
 const total = Array.isArray(questions) ? questions.length : 0;
 const isLoading = total === 0;                 // guard while questions load
