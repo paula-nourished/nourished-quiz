@@ -25,6 +25,96 @@ const QUESTIONS_URL = "/boots_quiz_questions.json";    // your questions JSON in
 const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
 const PRIORITIES_TITLE = "Which of the below are your top two priorities in the upcoming months?";
 
+// ---- diagnostics: see exactly why a question didn't score
+function findWeightsForTitle(weightsMap, qTitle) {
+  if (!weightsMap || !qTitle) return null;
+  const n = norm(qTitle);
+  const weightsNorm = new Map(Object.entries(weightsMap).map(([t, map]) => [norm(t), { title: t, map }]));
+  const exact = weightsNorm.get(n);
+  if (exact) return { ...exact, match: "exact" };
+  for (const [kn, obj] of weightsNorm.entries()) {
+    if (n.includes(kn) || kn.includes(n)) return { ...obj, match: "fuzzy" };
+  }
+  return null;
+}
+
+function sliderBucketLabel(optionMap, value) {
+  const keys = Object.keys(optionMap || {});
+  if (!keys.length) return null;
+  const low = keys[0];
+  const high = keys[keys.length - 1];
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (n <= 2) return low;
+  if (n >= 4) return high;
+  return null; // middle = neutral
+}
+
+function buildOptionLabelIndex(questions) {
+  const index = {};
+  (questions || []).forEach((q) => {
+    const map = {};
+    (q?.answers || []).forEach((a) => {
+      const id = String(a?.id ?? a?.value ?? a?.label ?? "");
+      const label = String(a?.label ?? a?.name ?? a?.value ?? a?.id ?? id);
+      if (id) map[id] = label;
+    });
+    if (q?.title) index[q.title] = map;
+  });
+  return index;
+}
+
+function diagnoseMapping(answers, weights, questions) {
+  const rows = [];
+  const labelIndex = buildOptionLabelIndex(questions);
+
+  (questions || []).forEach((q) => {
+    const qTitle = q?.title || "(no title)";
+    const found = findWeightsForTitle(weights, qTitle);
+    const optionMap = found?.map || {};
+    const optionKeys = Object.keys(optionMap);
+
+    let chosen = answers[qTitle];
+    if (chosen == null) chosen = answers[q.id];
+
+    let resolved = [];
+    if (chosen != null) {
+      const index = labelIndex[qTitle] || {};
+      const optionMapNorm = new Map(optionKeys.map((lab) => [norm(lab), lab]));
+      const idToLabel = (v) => {
+        const vStr = String(v);
+        if (Object.prototype.hasOwnProperty.call(optionMap, vStr)) return vStr; // already a label
+        const viaId = index[vStr];
+        if (viaId && optionMap[viaId]) return viaId;
+        return optionMapNorm.get(norm(vStr)) || vStr;
+      };
+
+      if (Array.isArray(chosen)) {
+        resolved = chosen.map(idToLabel).filter((lab) => optionMap[lab]);
+      } else if (typeof chosen === "number" || /^[0-9]+$/.test(String(chosen))) {
+        const lab = sliderBucketLabel(optionMap, chosen);
+        resolved = lab && optionMap[lab] ? [lab] : [];
+      } else {
+        const lab0 = idToLabel(chosen);
+        const lab = optionMapNorm.get(norm(lab0)) || lab0;
+        resolved = optionMap[lab] ? [lab] : [];
+      }
+    }
+
+    rows.push({
+      titleUI: qTitle,
+      weightsMatchedTitle: found?.title || "(no match)",
+      matchType: found?.match || "(none)",
+      optionKeys,
+      chosenRaw: chosen === undefined ? "(none)" : chosen,
+      resolvedLabelsUsed: resolved,
+    });
+  });
+
+  return rows;
+}
+
+
 // ---- small utils
 function useQueryParams() {
   const [params, setParams] = useState(null);
@@ -331,46 +421,22 @@ function scoreAnswers(answers, weightsMap, questions) {
 
   const labelIndex = buildOptionLabelIndex(questions);
 
-  // weights lookup by normalised TITLE
-  const weightsNorm = new Map(Object.entries(weightsMap || {}).map(([t, map]) => [norm(t), { title: t, map }]));
-  const findWeightsForTitle = (qTitle) => {
-    const n = norm(qTitle);
-    const exact = weightsNorm.get(n);
-    if (exact) return exact;
-    for (const [kn, obj] of weightsNorm.entries()) {
-      if (n.includes(kn) || kn.includes(n)) return obj;
-    }
-    return null;
-  };
-  const sliderBucketLabel = (optionMap, value) => {
-    const keys = Object.keys(optionMap || {});
-    if (!keys.length) return null;
-    const low = keys[0];
-    const high = keys[keys.length - 1];
-    const n = Number(value);
-    if (!Number.isFinite(n)) return null;
-    if (n <= 2) return low;
-    if (n >= 4) return high;
-    return null; // middle neutral
-  };
-
   (questions || []).forEach((q) => {
     try {
       const qTitle = q?.title;
       if (!qTitle) return;
 
-      const found = findWeightsForTitle(qTitle);
-      if (!found) { if (DEBUG_SCORING) console.debug("[score] no weights for:", qTitle); return; }
+      const found = findWeightsForTitle(weightsMap, qTitle);
+      if (!found) return;
 
-      const optionMap = found.map;                          // label -> [product codes]
-      const optionMapNorm = new Map(Object.keys(optionMap).map((label) => [norm(label), label]));
+      const optionMap = found.map; // label -> [product codes]
+      const optionKeys = Object.keys(optionMap);
+      const optionMapNorm = new Map(optionKeys.map((lab) => [norm(lab), lab]));
 
-      // prefer title key; fallback to id key
       let chosen = answers[qTitle];
       if (chosen == null) chosen = answers[q.id];
-      if (chosen == null) { if (DEBUG_SCORING) console.debug("[score] no answer for:", qTitle); return; }
+      if (chosen == null) return;
 
-      // id -> label
       const idToLabel = (v) => {
         const vStr = String(v);
         if (Object.prototype.hasOwnProperty.call(optionMap, vStr)) return vStr; // already a label
@@ -380,7 +446,6 @@ function scoreAnswers(answers, weightsMap, questions) {
         return fromNorm || vStr;
       };
 
-      // normalise to labels present in optionMap
       let labels = [];
       if (Array.isArray(chosen)) {
         labels = chosen
@@ -396,18 +461,13 @@ function scoreAnswers(answers, weightsMap, questions) {
         if (optionMap[lab]) labels = [lab];
       }
 
-      if (!labels.length && DEBUG_SCORING) {
-        console.debug("[score] no label match", { qTitle, chosen, options: Object.keys(optionMap) });
-      }
-
       labels.forEach((lab) => (optionMap[lab] || []).forEach((code) => add(code, 1)));
-    } catch (e) {
-      if (DEBUG_SCORING) console.warn("[score] skip:", q?.title, e);
-    }
+    } catch {}
   });
 
   return tallies;
 }
+
 
 function pickWinner(tallies, answers, weightsMap) {
   const order = Array.isArray(PRODUCT_ORDER) ? PRODUCT_ORDER : [];
@@ -764,7 +824,39 @@ useEffect(() => {
             <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
               Your recommendation
             </h2>
-
+{/* Diagnostics panel */}
+<div
+  className="mx-auto mb-4 rounded-xl border p-3 text-left text-xs"
+  style={{ width: "min(1000px, 92vw)", borderColor: BRAND.border, background: "rgba(255,255,255,0.7)" }}
+>
+  <strong>Diagnostics</strong>
+  <div style={{ marginTop: 6 }}>
+    <div><b>Weights titles (count):</b> {Object.keys(weights || {}).length}</div>
+    <div style={{ marginTop: 6 }}>
+      <details open>
+        <summary style={{ cursor: "pointer" }}>First 20 weights titles</summary>
+        <pre style={{ whiteSpace: "pre-wrap" }}>
+{JSON.stringify(Object.keys(weights || {}).slice(0, 20), null, 2)}
+        </pre>
+      </details>
+    </div>
+    <div style={{ marginTop: 6 }}>
+      <details open>
+        <summary style={{ cursor: "pointer" }}>Per-question mapping</summary>
+        <pre style={{ whiteSpace: "pre-wrap" }}>
+{(() => {
+  try {
+    const rows = diagnoseMapping(answers, weights, questions);
+    return JSON.stringify(rows, null, 2);
+  } catch (e) {
+    return "diag error: " + String(e?.message || e);
+  }
+})()}
+        </pre>
+      </details>
+    </div>
+  </div>
+</div>
             {/* Optional debug panel: add ?debug=1 to see it */}
             {DEBUG_SCORING && (
               <div
