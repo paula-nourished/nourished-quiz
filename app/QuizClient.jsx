@@ -19,6 +19,14 @@ const BRAND = {
   border: "#d6d1c9",
 };
 
+// ---- scoring config
+const WEIGHTS_URL = "/boots_quiz_weights.json"; // put the JSON file in /public
+
+// Stable order for tie-breaking
+const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
+
+// Must exactly match the priorities question title in the sheet/weights JSON
+const PRIORITIES_TITLE = "Which of the below are your top two priorities in the upcoming months?";
 
 // ---- utilities
 function useQueryParams() {
@@ -226,6 +234,51 @@ function isNo(val) {
   return String(val ?? "").toLowerCase() === "no";
 }
 
+// ---- scoring helpers
+function scoreAnswers(answers, weightsMap) {
+  const tallies = {};
+  const add = (code, n = 1) => { if (!code) return; tallies[code] = (tallies[code] || 0) + n; };
+
+  // weightsMap is keyed by question TITLE; we read the user's answers by that title
+  Object.keys(weightsMap || {}).forEach((title) => {
+    const optionMap = weightsMap[title] || {};
+    const chosen = answers[title];
+
+    if (Array.isArray(chosen)) {
+      chosen.forEach((opt) => (optionMap[opt] || []).forEach((code) => add(code, 1)));
+    } else if (chosen != null) {
+      (optionMap[chosen] || []).forEach((code) => add(code, 1));
+    }
+  });
+
+  return tallies;
+}
+
+function pickWinner(tallies, answers, weightsMap) {
+  // 1) highest score
+  let max = -Infinity, leaders = [];
+  PRODUCT_ORDER.forEach((code) => {
+    const v = tallies[code] || 0;
+    if (v > max) { max = v; leaders = [code]; }
+    else if (v === max) { leaders.push(code); }
+  });
+  if (leaders.length === 1) return leaders[0];
+
+  // 2) tie-break via priorities (if present)
+  const priMap = weightsMap?.[PRIORITIES_TITLE];
+  const priAns = answers?.[PRIORITIES_TITLE];
+  if (priMap && Array.isArray(priAns) && priAns.length) {
+    for (const opt of priAns) {
+      const code = (priMap[opt] || [])[0];
+      if (code && leaders.includes(code)) return code;
+    }
+  }
+
+  // 3) stable fallback
+  return leaders.sort((a, b) => PRODUCT_ORDER.indexOf(a) - PRODUCT_ORDER.indexOf(b))[0];
+}
+
+
 // ---- generic answer chip (legacy multi)
 function AnswerChip({ selected, children, onClick, kiosk }) {
   return (
@@ -430,7 +483,8 @@ export default function QuizClient() {
   const { get } = useQueryParams();
   const kiosk = get("kiosk", "0") === "1";
   const context = get("context", "default");
-
+  const [weights, setWeights] = useState({});
+	
   useAutoResize();
 
   // Idle
@@ -530,28 +584,61 @@ export default function QuizClient() {
     };
   }, []);
 
-  const total = questions.length;
-  const current = step === 0 ? null : questions[step - 1];
-  const isResults = step > total;
+	// Load weightings JSON for scoring
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    try {
+      const res = await fetch(WEIGHTS_URL, { cache: "no-store" });
+      const w = res.ok ? await res.json() : {};
+      if (!cancelled) setWeights(w || {});
+    } catch {
+      if (!cancelled) setWeights({});
+    }
+  })();
+  return () => { cancelled = true; };
+}, []);
 
-  function setAnswer(qid, value, mode = "single") {
-    setAnswers((prev) => {
-      const next = { ...prev };
+const total = Array.isArray(questions) ? questions.length : 0;
+const isLoading = total === 0;                 // guard while questions load
+const isResults = total > 0 && step > total;   // only show results when we have questions
+const current = step === 0 ? null : questions[step - 1];
+
+	useEffect(() => {
+  if (total === 0) return;
+  const maxStep = total + 1; // +1 is results page
+  if (step < 0 || step > maxStep) setStep(0);
+}, [total, step]);
+
+function setAnswer(qid, value, mode = "single") {
+  setAnswers((prev) => {
+    const next = { ...prev };
+    const titleKey = current?.title; // current visible title
+
+    const saveVal = (destKey) => {
+      if (!destKey) return;
       if (mode === "multi") {
-        const set = new Set(Array.isArray(prev[qid]) ? prev[qid] : []);
+        const set = new Set(Array.isArray(prev[destKey]) ? prev[destKey] : []);
         set.has(value) ? set.delete(value) : set.add(value);
-        next[qid] = Array.from(set);
+        next[destKey] = Array.from(set);
       } else if (mode === "multi-limit-2") {
-        const set = new Set(Array.isArray(prev[qid]) ? prev[qid] : []);
+        const set = new Set(Array.isArray(prev[destKey]) ? prev[destKey] : []);
         if (set.has(value)) set.delete(value);
         else if (set.size < 2) set.add(value);
-        next[qid] = Array.from(set);
+        next[destKey] = Array.from(set);
       } else {
-        next[qid] = value;
+        next[destKey] = value;
       }
-      return next;
-    });
-  }
+    };
+
+    // store under qid (for navigation) and under the title (for scoring)
+    saveVal(qid);
+    if (titleKey) saveVal(titleKey);
+
+    return next;
+  });
+}
+
 
   function canContinue() {
     if (step === 0) return true;
@@ -669,6 +756,16 @@ export default function QuizClient() {
         }
       `}</style>
 
+		{isLoading && (
+  <Stage kiosk={kiosk}>
+    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
+      <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 12 }}>
+        Loading quiz…
+      </h2>
+      <div style={{ opacity: 0.7 }}>One moment while we fetch your questions.</div>
+    </div>
+  </Stage>
+)}
       {/* idle attract */}
       {kiosk && idle && !isResults && (
         <AttractScreen
@@ -898,16 +995,53 @@ export default function QuizClient() {
       )}
 
       {/* results */}
-      {isResults && (
-        <Stage kiosk={kiosk}>
-          <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
-            <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
-              Your recommendation
-            </h2>
-            <div style={{ marginBottom: 16, opacity: 0.85 }}>
-              Coming Soon — your personalised result will appear here once scoring is connected.
+{isResults && (
+  <Stage kiosk={kiosk}>
+    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
+      <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
+        Your recommendation
+      </h2>
+
+      {(() => {
+        const tallies = scoreAnswers(answers, weights);
+        const winner = pickWinner(tallies, answers, weights);
+
+        return (
+          <>
+            <div
+              className="mx-auto mb-6 rounded-3xl border p-6"
+              style={{ width: "min(560px, 92vw)", borderColor: BRAND.border }}
+            >
+              <div className="text-6xl font-extrabold mb-2" style={{ color: BRAND.text }}>
+                {winner || "—"}
+              </div>
+              <div style={{ opacity: 0.75 }}>
+                {winner ? "Top match based on your answers." : "No result yet — please answer the questions."}
+              </div>
+
+              {Object.values(tallies).some((v) => v > 0) && (
+                <div className="mt-4 text-left text-sm">
+                  {Object.entries(tallies)
+                    .filter(([_, v]) => v > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([code, v]) => (
+                      <div key={code} className="flex justify-between">
+                        <span>{code}</span><span>{v}</span>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
+
             <div className="grid gap-3" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
+              <Button
+                kiosk={kiosk}
+                onClick={() => {
+                  postToParent({ type: "NOURISHED_QUIZ_EVENT", event: "results_continue_clicked", payload: { winner } });
+                }}
+              >
+                Continue
+              </Button>
               <Button
                 kiosk={kiosk}
                 onClick={() => {
@@ -918,22 +1052,18 @@ export default function QuizClient() {
               >
                 Restart
               </Button>
-              <Button
-                kiosk={kiosk}
-                onClick={() => {
-                  postToParent({ type: "NOURISHED_QUIZ_EVENT", event: "cta_clicked" });
-                  alert("CTA clicked. In production, deep-link or let host handle.");
-                }}
-              >
-                Continue
-              </Button>
             </div>
-            <p className="text-xs" style={{ opacity: 0.6, marginTop: 16 }}>
-              Context: <code>{context}</code>
-            </p>
-          </div>
-        </Stage>
-      )}
+          </>
+        );
+      })()}
+
+      <p className="text-xs" style={{ opacity: 0.6, marginTop: 16 }}>
+        Context: <code>{context}</code>
+      </p>
+    </div>
+  </Stage>
+)}
+
 
       <div className="h-4" aria-hidden />
     </div>
