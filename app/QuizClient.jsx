@@ -573,105 +573,93 @@ function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect
 // ---- Priorities = Multi with icons (max 2) – just reuse above
 const PeriodicOptionsMultiWithIcons = PeriodicOptionsMulti;
 
-function ProductResultView({ code, tallies, context, kiosk }) {
+function ProductResultView({ code, tallies, kiosk }) {
   const meta = PRODUCT_META[code] || {
     name: code,
-    title: "",
+    subtitle: "",
     blurb: "Your personalised recommendation based on your answers.",
     images: { exploded: "/fallback-exploded.png", pack: "/fallback-pack.png" },
   };
 
-  // compact counts line (non-zero only)
+  // non-zero counts, sorted desc
   const counts = Object.entries(tallies)
     .filter(([, v]) => v > 0)
     .sort((a, b) => b[1] - a[1]);
 
   return (
     <div
-      className="rounded-[24px] border p-6 md:p-8"
-      style={{ borderColor: BRAND.border, background: "rgba(255,255,255,.9)" }}
+      className="rounded-[28px] border p-6 md:p-8"
+      style={{ borderColor: BRAND.border, background: "rgba(255,255,255,.92)" }}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <img src={LOGO_SRC} alt="Nourished Formula" className="h-8 md:h-10" />
+      {/* Header: logo left, big code right */}
+      <header className="flex items-start justify-between gap-4 mb-6 md:mb-8">
+        <img src={LOGO_SRC} alt="Nourished formulaic" className="h-7 md:h-9" />
         <div className="text-right">
           <div className="text-5xl md:text-6xl font-extrabold leading-none" style={{ color: BRAND.text }}>
             {meta.name}
           </div>
-          {meta.title && (
-            <div className="text-sm md:text-base opacity-75" style={{ color: BRAND.text }}>
-              {meta.title}
+          {meta.subtitle && (
+            <div className="text-sm md:text-base opacity-70" style={{ color: BRAND.text }}>
+              {meta.subtitle}
             </div>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* 2-column visual layout */}
-      <div className="grid gap-6 md:gap-8 md:grid-cols-2 items-center">
-        {/* Left: exploded stack / ingredients */}
+      {/* Two-column body: exploded left, pack right */}
+      <div className="grid gap-6 md:gap-10 md:grid-cols-2 items-center">
+        {/* Left: exploded + blurb + counts */}
         <div className="order-2 md:order-1">
           <img
             src={meta.images.exploded}
             alt={`${meta.name} exploded stack`}
-            className="w-full h-auto rounded-2xl shadow"
+            className="w-full h-auto rounded-2xl"
             style={{ boxShadow: TILE.shadow }}
             onError={(e) => (e.currentTarget.style.display = "none")}
           />
 
-		<p className="text-base md:text-lg" style={{ color: BRAND.text }}>
-            {meta.blurb}
-          </p>
-        </div>
+          {meta.blurb && (
+            <p className="mt-6 text-base md:text-lg text-center md:text-left" style={{ color: BRAND.text }}>
+              {meta.blurb}
+            </p>
+          )}
 
-        {/* Right: pack + copy */}
-        <div className="order-1 md:order-2 flex flex-col items-start gap-4">
-          <img
-            src={meta.images.pack}
-            alt={`${meta.name} pack shot`}
-            className="w-60 md:w-72 h-auto self-center md:self-end rounded-xl"
-            onError={(e) => (e.currentTarget.style.display = "none")}
-          />
-
-          <p className="text-base md:text-lg" style={{ color: BRAND.text }}>
-            {meta.blurb}
-          </p>
-
+          {/* Compact counts line + neat list */}
           {counts.length > 0 && (
-            <div className="text-sm opacity-80 w-full">
-              {counts.map(([c, v], i) => (
-                <span key={c}>
-                  {c} {v}
-                  {i < counts.length - 1 ? " • " : ""}
-                </span>
-              ))}
+            <div className="w-full mt-3">
+              <div className="text-sm opacity-80 text-center md:text-left">
+                {counts.map(([c, v], i) => (
+                  <span key={c}>
+                    {c} {v}
+                    {i < counts.length - 1 ? " • " : ""}
+                  </span>
+                ))}
+              </div>
+              <div
+                className="mt-3 grid gap-1 text-left text-sm"
+                style={{ width: "min(520px, 90%)", marginInline: "auto" }}
+              >
+                {counts.map(([c, v]) => (
+                  <div key={c} className="flex justify-between">
+                    <span>{c}</span>
+                    <span>{v}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Footer actions */}
-      <div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
-        <Button
-          kiosk={kiosk}
-          onClick={() => {
-            window.parent?.postMessage({ type: "NOURISHED_QUIZ_EVENT", event: "results_continue_clicked", payload: { winner: code } }, "*");
-          }}
-        >
-          Continue
-        </Button>
-        <Button
-          kiosk={kiosk}
-          onClick={() => {
-            // reset handled by parent component
-            const ev = new Event("nourished-quiz-restart");
-            window.dispatchEvent(ev);
-          }}
-        >
-          Restart
-        </Button>
+        {/* Right: pack shot */}
+        <div className="order-1 md:order-2 flex justify-center md:justify-end">
+          <img
+            src={meta.images.pack}
+            alt={`${meta.name} pack`}
+            className="w-56 md:w-72 h-auto rounded-xl"
+            onError={(e) => (e.currentTarget.style.display = "none")}
+          />
+        </div>
       </div>
-
-      <p className="text-[11px] opacity-60 mt-3 text-center">Context: <code>{context}</code></p>
     </div>
   );
 }
