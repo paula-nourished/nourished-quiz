@@ -27,19 +27,19 @@ const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca",
 
 // ---- product display metadata (code -> display)
 const PRODUCT_META = {
-Ecp: { name: "Ecp", title: "Energy • Cognition • Psychological", blurb: "We recommend the Ecp formula, precision-blended to support energy¹², cognitive³ and psychological function⁴.", images: { exploded: "/products/Ecp/exploded.png", pack: "/products/Ecp-1.png" } },
+Ecp: { name: "Ecp", title: "Energy • Cognitive Function • Psychological Function", blurb: "We recommend the ECP formula, precision nutrition formulated to support energy¹,², cognitive function³ & psychological function⁴", images: { exploded: "/products/Ecp/exploded.png", pack: "/products/Ecp-1.png" } },
 	
-Eic: { name: "Eic", title: "Immunity • Cognition", blurb: "Targeted support for immune and cognitive function.", images:{ exploded:"/products/Eic/exploded.png", pack:"products/Eic-1.png" } },
+Eic: { name: "Eic", title: "Energy • Immunity • Cognitive Function", blurb: "We recommend the EIC formula, precision nutrition formulated to support energy¹,², immunity³ & cognitive function⁴", images:{ exploded:"/products/Eic/exploded.png", pack:"products/Eic-1.png" } },
 	
 Mjb: { name: "Mjb", title: "Muscles • Joints • Bones", blurb: "We recommend the MJB formula, precision nutrition formulated to support muscle health¹, joint health² & bone health³", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Mjb-1.png" } },
 	
-Bmca: { name: "Bmca", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Bmca-1.png" } },
+Bmca: { name: "Bmca", title: "Bone Health • Metabolism • Cardiovascular Health", blurb: "We recommend the BMCA formula, precision nutrition formulated to support bone health¹, muscle health² & cardiovascular health³,⁴", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Bmca-1.png" } },
 	
-Cpe: { name: "Cpe", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Cpe-1.png" } },
+Cpe: { name: "Cpe", title: "Cognitive Function • Psychological Function • Energy", blurb: "We recommend the CPE formula, precision nutrition formulated to support cognitive function¹, psychological function²& energy³,⁴", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Cpe-1.png" } },
 	
-Epi: { name: "Epi", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Epi-1.png" } },
+Epi: { name: "Epi", title: "Energy • Psychological Function • Immunity", blurb: "We recommend the EPI formula, precision nutrition formulated to support energy¹, psychological function² & immunity³", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Epi-1.png" } },
 	
-Gsi: { name: "Gsi", title: "Motion • Joints • Bones", blurb: "Formulated to support joint comfort and recovery.", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Gsi-1.png" } },
+Gsi: { name: "Gsi", title: "Gut Health • Skin Health • Immunity", blurb: "We recommend the GSI formula, precision nutrition formulated to support collagen formation¹, oxidative stress² & a healthy immune system³", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Gsi-1.png" } },
 	
 Hcp: { name: "Hcp", title: "Hormonal Balance • Cognitive Function • Psychological Function", blurb: "We recommend the HCP formula, precision nutrition formulated to support hormone regulation¹,cognitive function², bone health³ & combat tiredness & fatigue⁴", images:{ exploded:"/products/Mjb/exploded.png", pack:"products/Hcp-1.png" } },
 	
