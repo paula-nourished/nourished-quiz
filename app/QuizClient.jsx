@@ -27,31 +27,31 @@ const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca",
 
 // ---- product display metadata (code -> display)
 const PRODUCT_META = {
-Ecp: { name: "Ecp", title: "Energy • Cognitive Function • Psychological Function", blurb: "We recommend the ECP formula, precision nutrition formulated to support energy¹,², cognitive function³ & psychological function⁴", images: { exploded: "products/Ecp-3.png", pack: "products/Ecp-1.png" } },
+Ecp: { name: "Ecp", title: "Energy • Cognitive Function • Psychological Function", blurb: "We recommend the ECP formula, precision nutrition formulated to support energy¹,², cognitive function³ & psychological function⁴", images: { exploded: "products/Ecp-3.jpg", pack: "products/Ecp-1.png" } },
 	
-Eic: { name: "Eic", title: "Energy • Immunity • Cognitive Function", blurb: "We recommend the EIC formula, precision nutrition formulated to support energy¹,², immunity³ & cognitive function⁴", images:{ exploded:"products/Eic-3.png", pack:"products/Eic-1.png" } },
+Eic: { name: "Eic", title: "Energy • Immunity • Cognitive Function", blurb: "We recommend the EIC formula, precision nutrition formulated to support energy¹,², immunity³ & cognitive function⁴", images:{ exploded:"products/Eic-3.jpg", pack:"products/Eic-1.png" } },
 	
-Mjb: { name: "Mjb", title: "Muscles • Joints • Bones", blurb: "We recommend the MJB formula, precision nutrition formulated to support muscle health¹, joint health² & bone health³", images:{ exploded:"products/Mjb-3.png", pack:"products/Mjb-1.png" } },
+Mjb: { name: "Mjb", title: "Muscles • Joints • Bones", blurb: "We recommend the MJB formula, precision nutrition formulated to support muscle health¹, joint health² & bone health³", images:{ exploded:"products/Mjb-3.jpg", pack:"products/Mjb-1.png" } },
 	
-Bmca: { name: "Bmca", title: "Bone Health • Metabolism • Cardiovascular Health", blurb: "We recommend the BMCA formula, precision nutrition formulated to support bone health¹, muscle health² & cardiovascular health³,⁴", images:{ exploded:"products/Bmca-3.png", pack:"products/Bmca-1.png" } },
+Bmca: { name: "Bmca", title: "Bone Health • Metabolism • Cardiovascular Health", blurb: "We recommend the BMCA formula, precision nutrition formulated to support bone health¹, muscle health² & cardiovascular health³,⁴", images:{ exploded:"products/Bmca-3.jpg", pack:"products/Bmca-1.png" } },
 	
-Cpe: { name: "Cpe", title: "Cognitive Function • Psychological Function • Energy", blurb: "We recommend the CPE formula, precision nutrition formulated to support cognitive function¹, psychological function²& energy³,⁴", images:{ exploded:"products/Cpe-3.png", pack:"products/Cpe-1.png" } },
+Cpe: { name: "Cpe", title: "Cognitive Function • Psychological Function • Energy", blurb: "We recommend the CPE formula, precision nutrition formulated to support cognitive function¹, psychological function²& energy³,⁴", images:{ exploded:"products/Cpe-3.jpg", pack:"products/Cpe-1.png" } },
 	
-Epi: { name: "Epi", title: "Energy • Psychological Function • Immunity", blurb: "We recommend the EPI formula, precision nutrition formulated to support energy¹, psychological function² & immunity³", images:{ exploded:"products/Epi-3.png", pack:"products/Epi-1.png" } },
+Epi: { name: "Epi", title: "Energy • Psychological Function • Immunity", blurb: "We recommend the EPI formula, precision nutrition formulated to support energy¹, psychological function² & immunity³", images:{ exploded:"products/Epi-3.jpg", pack:"products/Epi-1.png" } },
 	
-Gsi: { name: "Gsi", title: "Gut Health • Skin Health • Immunity", blurb: "We recommend the GSI formula, precision nutrition formulated to support collagen formation¹, oxidative stress² & a healthy immune system³", images:{ exploded:"products/Gsi-3.png", pack:"products/Gsi-1.png" } },
+Gsi: { name: "Gsi", title: "Gut Health • Skin Health • Immunity", blurb: "We recommend the GSI formula, precision nutrition formulated to support collagen formation¹, oxidative stress² & a healthy immune system³", images:{ exploded:"products/Gsi-3.jpg", pack:"products/Gsi-1.png" } },
 	
-Hcp: { name: "Hcp", title: "Hormonal Balance • Cognitive Function • Psychological Function", blurb: "We recommend the HCP formula, precision nutrition formulated to support hormone regulation¹,cognitive function², bone health³ & combat tiredness & fatigue⁴", images:{ exploded:"products/Hcp-3.png", pack:"products/Hcp-1.png" } },
+Hcp: { name: "Hcp", title: "Hormonal Balance • Cognitive Function • Psychological Function", blurb: "We recommend the HCP formula, precision nutrition formulated to support hormone regulation¹,cognitive function², bone health³ & combat tiredness & fatigue⁴", images:{ exploded:"products/Hcp-3.jpg", pack:"products/Hcp-1.png" } },
 	
-Hpes: { name: "Hpes", title: "Hormonal Balance • Psychological Function • Energy", blurb: "We recommend the HPES formula, precision nutrition formulated to support psychological function¹, energy² & collagen formation for healthy hair, skin & nails³,⁴", images:{ exploded:"products/Hpes-3.png", pack:"products/Hpes-1.png" } },
+Hpes: { name: "Hpes", title: "Hormonal Balance • Psychological Function • Energy", blurb: "We recommend the HPES formula, precision nutrition formulated to support psychological function¹, energy² & collagen formation for healthy hair, skin & nails³,⁴", images:{ exploded:"products/Hpes-3.jpg", pack:"products/Hpes-1.png" } },
 	
-Meca: { name: "Meca", title: "Metabolism • Energy • Cardiovascular Health", blurb: "We recommend the MECA formula, precision nutrition formulated to support metabolic health¹, energy²,³ & cardiovascular health⁴", images:{ exploded:"products/Meca-3.png", pack:"products/Meca-1.png" } },
+Meca: { name: "Meca", title: "Metabolism • Energy • Cardiovascular Health", blurb: "We recommend the MECA formula, precision nutrition formulated to support metabolic health¹, energy²,³ & cardiovascular health⁴", images:{ exploded:"products/Meca-3.jpg", pack:"products/Meca-1.png" } },
 	
-Rnp: { name: "Rnp", title: "Recovery • Nervous System • Psychological Function", blurb: "We recommend the RNP formula, precision nutrition formulated to support tiredness & fatigue¹, the nervous system² & psychological function³", images:{ exploded:"products/Rnp-3.png", pack:"products/Rnp-1.png" } },
+Rnp: { name: "Rnp", title: "Recovery • Nervous System • Psychological Function", blurb: "We recommend the RNP formula, precision nutrition formulated to support tiredness & fatigue¹, the nervous system² & psychological function³", images:{ exploded:"products/Rnp-3.jpg", pack:"products/Rnp-1.png" } },
 
-Shp: { name: "Shp", title: "Skin Health • Hormonal Balance • Psychological Function", blurb: "We recommend the SHP formula, precision nutrition formulated to support collagen formation¹, healthy hair² & psychological function³", images:{ exploded:"products/Shp-3.png", pack:"products/Shp-1.png" } },
+Shp: { name: "Shp", title: "Skin Health • Hormonal Balance • Psychological Function", blurb: "We recommend the SHP formula, precision nutrition formulated to support collagen formation¹, healthy hair² & psychological function³", images:{ exploded:"products/Shp-3.jpg", pack:"products/Shp-1.png" } },
 
-Spe: { name: "Spe", title: "Skin Health • Psychological Function • Energy", blurb: "We recommend the SPE formula, precision nutrition formulated to support collagen formation¹, psychological function² & reduce tiredness & fatigue³", images:{ exploded:"products/Spe-3.png", pack:"products/Spe-1.png" } },
+Spe: { name: "Spe", title: "Skin Health • Psychological Function • Energy", blurb: "We recommend the SPE formula, precision nutrition formulated to support collagen formation¹, psychological function² & reduce tiredness & fatigue³", images:{ exploded:"products/Spe-3.jpg", pack:"products/Spe-1.png" } },
 	
   // ...
 };
