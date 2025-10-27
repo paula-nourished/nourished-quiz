@@ -817,7 +817,6 @@ function setAnswer(qid, value, mode = "single") {
     if (current.required === false) return true;
     const v = answers[current.id];
     if (isExercise(current)) return Array.isArray(v) && v.length > 0;
-    if (isPriorities(current)) return Array.isArray(v) && v.length > 0 && v.length <= 2;
     return current.type === "multi" ? true : Boolean(v);
   }
 
@@ -826,8 +825,6 @@ function setAnswer(qid, value, mode = "single") {
   const isWhichDiet = (q) => titleIncludes(q, "which diet");
   const isProcessed = (q) => titleIncludes(q, "how often do you consume processed food") || titleIncludes(q, "how often do you eat processed");
   const isExercise = (q) => titleIncludes(q, "when you exercise") || titleIncludes(q, "what kind of exercise");
-  const isPriorities = (q) =>
-    String(q?.title || "") === "Which of the below are your top two priorities in the upcoming months?";
   const isActiveWeek = (q) => titleIncludes(q, "how active are you in a typical week");
   const isGender = (q) => /are you\b|gender/i.test(q?.title || "");
 
@@ -1017,19 +1014,19 @@ function setAnswer(qid, value, mode = "single") {
 
                   {/* Body */}
                   {(() => {
-                    // priorities (multi icons, max 2)
-                    if (isPriorities(current)) {
-                      const vals = Array.isArray(answers[current.id]) ? answers[current.id] : [];
-                      return (
-                        <PeriodicOptionsMultiWithIcons
-                          options={current.answers}
-                          values={vals}
-                          onToggle={(id) => setAnswer(current.id, id, "multi-limit-2")}
-                          kiosk={kiosk}
-                          maxSelect={2}
-                        />
-                      );
-                    }
+// priorities (was multi-limit-2) → now single-select with icons
+if (isPriorities(current)) {
+  const val = answers[current.id] || "";
+  return (
+    <PeriodicOptions
+      options={current.answers}
+      value={val}
+      onChange={(id) => setAnswer(current.id, id, "single")}
+      kiosk={kiosk}
+      getIconPath={getAnswerIconPath}
+    />
+  );
+}
                     // slider (robust) or specific active-week title
                     if (current.type === "slider" || isActiveWeek(current)) {
                       const val = Number(answers[current.id] || 3);
