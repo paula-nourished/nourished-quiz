@@ -23,7 +23,7 @@ const BRAND = {
 const WEIGHTS_URL = "boots_quiz_weights.json"; // put the JSON file in /public
 
 // Stable order for tie-breaking
-const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","Hcb","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
+const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","Hcp","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
 
 // ---- product display metadata (code -> display)
 const PRODUCT_META = {
