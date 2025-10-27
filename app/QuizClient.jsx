@@ -214,7 +214,7 @@ function getAnswerIconPath(label) {
   const key = String(label || "").toLowerCase();
   if (key.includes("energy")) return "/icons/energy.svg";
   if (key.includes("lifestyle")) return "/icons/lifestyle.svg";
-  if (key.includes("rest") || key.includes("sleep")) return "/icons/rest.svg";
+  if (key.includes("rested") || key.includes("sleep")) return "/icons/rest.svg";
   if (key.includes("focus") || key.includes("memory") || key.includes("concentration")) return "/icons/memory.svg";
   if (key.includes("immunity") || key.includes("immune")) return "/icons/immunity.svg";
   if (key.includes("hair")) return "/icons/hair.svg";
