@@ -591,38 +591,33 @@ function ProductResultView({ code, tallies, kiosk }) {
       className="rounded-[28px] border p-6 md:p-8"
       style={{ borderColor: BRAND.border, background: "rgba(255,255,255,.92)" }}
     >
-      {/* Header: logo left, big code right */}
-      <header className="flex items-start justify-between gap-4 mb-6 md:mb-8">
-        <img src={LOGO_SRC} alt="Nourished formulaic" className="h-7 md:h-9" />
-        <div className="text-right">
-          <div className="text-5xl md:text-6xl font-extrabold leading-none" style={{ color: BRAND.text }}>
-            {meta.name}
-          </div>
-          {meta.subtitle && (
-            <div className="text-sm md:text-base opacity-70" style={{ color: BRAND.text }}>
-              {meta.subtitle}
-            </div>
-          )}
-        </div>
-      </header>
+
 
       {/* Two-column body: exploded left, pack right */}
       <div className="grid gap-6 md:gap-10 md:grid-cols-2 items-center">
         {/* Left: exploded + blurb + counts */}
+		  
         <div className="order-2 md:order-1">
-          <img
-            src={meta.images.exploded}
-            alt={`${meta.name} exploded stack`}
-            className="w-full h-auto rounded-2xl"
-            style={{ boxShadow: TILE.shadow }}
-            onError={(e) => (e.currentTarget.style.display = "none")}
-          />
-
-          {meta.blurb && (
+		<img src={LOGO_SRC} alt="Nourished formulaic" className="h-7 md:h-9" />
+		{meta.subtitle && (
+            <div className="text-sm md:text-base opacity-70" style={{ color: BRAND.text }}>
+              {meta.subtitle}
+            </div>
+          )}
+		<div className="text-5xl md:text-6xl font-extrabold leading-none" style={{ color: BRAND.text }}>
+            {meta.name}
+          </div>	
+			{meta.blurb && (
             <p className="mt-6 text-base md:text-lg text-center md:text-left" style={{ color: BRAND.text }}>
               {meta.blurb}
             </p>
           )}
+          <img
+            src={meta.images.exploded}
+            alt={`${meta.name} exploded stack`}
+            className="w-full h-auto rounded-2xl"
+            onError={(e) => (e.currentTarget.style.display = "none")}
+          />
 
           {/* Compact counts line + neat list */}
           {counts.length > 0 && (
@@ -655,7 +650,7 @@ function ProductResultView({ code, tallies, kiosk }) {
           <img
             src={meta.images.pack}
             alt={`${meta.name} pack`}
-            className="w-56 md:w-72 h-auto rounded-xl"
+            className="w-full h-auto rounded-2xl"
             onError={(e) => (e.currentTarget.style.display = "none")}
           />
         </div>
@@ -1189,9 +1184,6 @@ function setAnswer(qid, value, mode = "single") {
 {isResults && (
   <Stage kiosk={kiosk}>
     <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
-      <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 16 }}>
-        Your recommendation
-      </h2>
 
       {(() => {
         const tallies = scoreAnswers(answers, weights, questions);
@@ -1258,10 +1250,6 @@ function setAnswer(qid, value, mode = "single") {
           </>
         );
       })()}
-
-      <p className="text-xs" style={{ opacity: 0.6, marginTop: 16 }}>
-        Context: <code>{context}</code>
-      </p>
     </div>
   </Stage>
 )}
