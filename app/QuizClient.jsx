@@ -176,6 +176,13 @@ function AttractScreen({ onStart, kiosk }) {
           breastfeeding, taking medication or under medical supervision, please consult a healthcare professional before
           taking any supplements.
         </p>
+		<img
+          src="/periodic.png"
+          alt="Nourished Formula"
+            className="fixed bottom-0 left-0 w-full h-auto mx-auto"
+  draggable="false"
+          draggable="false"
+        />
       </div>
     </Stage>
   );
