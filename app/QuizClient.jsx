@@ -441,7 +441,7 @@ function AnswerChip({ selected, children, onClick, kiosk }) {
 
 // ---- Single-select icon tiles (centered, 4 per row max)
 function PeriodicOptions({ options, value, onChange, kiosk, getIconPath = getAnswerIconPath }) {
-  const iconSize = kiosk ? 88 : 72;
+  const iconSize = kiosk ? 88 : 40;
   return (
 
 
@@ -479,7 +479,7 @@ function PeriodicOptions({ options, value, onChange, kiosk, getIconPath = getAns
               color: BRAND.text,
             }}
           >
-            <div className="flex items-center gap-5" style={{ padding: kiosk ? 24 : 18 }}>
+            <div className="flex items-center gap-5" style={{ padding: kiosk ? 24 : 10 }}>
               <div
                 className="rounded-2xl shrink-0 grid place-items-center"
                 style={{ width: iconSize, height: iconSize, background: col.bg }}
@@ -530,7 +530,7 @@ function PeriodicOptions({ options, value, onChange, kiosk, getIconPath = getAns
 function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect = 2 }) {
   const selectedSet = new Set(values);
   const disabledAll = values.length >= maxSelect;
-  const iconSize = kiosk ? 88 : 72;
+  const iconSize = kiosk ? 88 : 40;
 
   return (
     <div
@@ -561,7 +561,7 @@ function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect
               color: BRAND.text,
             }}
           >
-            <div className="flex items-center gap-5" style={{ padding: kiosk ? 24 : 18 }}>
+            <div className="flex items-center gap-5" style={{ padding: kiosk ? 24 : 10 }}>
               <div
                 className="rounded-2xl shrink-0 grid place-items-center"
                 style={{ width: iconSize, height: iconSize, background: col.bg }}
