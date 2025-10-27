@@ -611,9 +611,24 @@ function ProductResultView({ code, tallies, kiosk }) {
             onError={(e) => (e.currentTarget.style.display = "none")}
           />
 
-         
+			          {/* Compact counts line + neat list */}
+          {counts.length > 0 && (
+            <div className="w-full mt-3">
+              <div className="text-sm opacity-80 text-center md:text-left">
+                {counts.map(([c, v], i) => (
+                  <span key={c}>
+                    {c} {v}
+                    {i < counts.length - 1 ? " • " : ""}
+                  </span>
+                ))}
+              </div>
+              
+            </div>
+          )}
+
         </div>
 
+		  
         {/* Right: pack shot */}
         <div className="order-1 md:order-2 flex justify-center md:justify-end">
           <img
