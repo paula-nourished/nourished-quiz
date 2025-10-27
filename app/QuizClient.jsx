@@ -23,7 +23,7 @@ const BRAND = {
 const WEIGHTS_URL = "boots_quiz_weights.json"; // put the JSON file in /public
 
 // Stable order for tie-breaking
-const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","hcb","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
+const PRODUCT_ORDER = ["Eic","Epi","Meca","Ecp","Cpe","Hcb","Hpes","Rnp","Bmca","Mjb","Spe","Shp","Gsi"];
 
 // ---- product display metadata (code -> display)
 const PRODUCT_META = {
@@ -825,7 +825,8 @@ function setAnswer(qid, value, mode = "single") {
     if (current.required === false) return true;
     const v = answers[current.id];
     if (isExercise(current)) return Array.isArray(v) && v.length > 0;
-    if (isPriorities(current)) return Array.isArray(v) && v.length > 0 && v.length <= 2;
+    // if (isPriorities(current)) return Array.isArray(v) && v.length > 0 && v.length <= 2;
+	if (isPriorities(current)) return Boolean(v);
     return current.type === "multi" ? true : Boolean(v);
   }
 
@@ -1026,18 +1027,33 @@ function setAnswer(qid, value, mode = "single") {
                   {/* Body */}
                   {(() => {
                     // priorities (multi icons, max 2)
-                    if (isPriorities(current)) {
-                      const vals = Array.isArray(answers[current.id]) ? answers[current.id] : [];
-                      return (
-                        <PeriodicOptionsMultiWithIcons
-                          options={current.answers}
-                          values={vals}
-                          onToggle={(id) => setAnswer(current.id, id, "multi-limit-2")}
-                          kiosk={kiosk}
-                          maxSelect={2}
-                        />
-                      );
-                    }
+                    // if (isPriorities(current)) {
+                    //  const vals = Array.isArray(answers[current.id]) ? answers[current.id] : [];
+                    //  return (
+                    //    <PeriodicOptionsMultiWithIcons
+                    //     options={current.answers}
+                    //      values={vals}
+                    //      onToggle={(id) => setAnswer(current.id, id, "multi-limit-2")}
+                    //      kiosk={kiosk}
+                    //      maxSelect={2}
+                    //    />
+                    //  );
+                   // } 
+
+// priorities → single-select with icons
+ if (isPriorities(current)) {
+   const val = answers[current.id] || "";
+   return (
+     <PeriodicOptions
+       options={current.answers}
+       value={val}
+       onChange={(id) => setAnswer(current.id, id, "single")}
+       kiosk={kiosk}
+       getIconPath={getAnswerIconPath}
+     />
+   );
+ }
+					
                     // slider (robust) or specific active-week title
                     if (current.type === "slider" || isActiveWeek(current)) {
                       const val = Number(answers[current.id] || 3);
