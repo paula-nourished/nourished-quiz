@@ -179,7 +179,7 @@ function AttractScreen({ onStart, kiosk }) {
 		<img
           src="/periodic.png"
           alt="Nourished Formula"
-            className="relative bottom-0 left-0 top-10 w-full h-auto mx-auto"
+            className="relative bottom-0 left-0 w-full h-auto mx-auto"
   draggable="false"
           draggable="false"
         />
@@ -1024,7 +1024,7 @@ function setAnswer(qid, value, mode = "single") {
 		<img
           src="/periodic.png"
           alt="Nourished Formula"
-            className="relative bottom-0 left-0 top-10 w-full h-auto mx-auto"
+            className="relative bottom-0 left-0 w-full h-auto mx-auto"
   draggable="false"
           draggable="false"
         />
