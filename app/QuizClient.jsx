@@ -594,19 +594,11 @@ function ProductResultView({ code, tallies, kiosk }) {
 
 
       {/* Two-column body: exploded left, pack right */}
-      <div className="grid gap-6 md:gap-10 md:grid-cols-2 items-center">
+      <div className="grid gap-6 md:gap-5 md:grid-cols-2 items-center">
         {/* Left: exploded + blurb + counts */}
 		  
         <div className="order-2 md:order-1">
-		<img src={LOGO_SRC} alt="Nourished formulaic" className="h-7 md:h-9" />
-		{meta.subtitle && (
-            <div className="text-sm md:text-base opacity-70" style={{ color: BRAND.text }}>
-              {meta.subtitle}
-            </div>
-          )}
-		<div className="text-5xl md:text-6xl font-extrabold leading-none" style={{ color: BRAND.text }}>
-            {meta.name}
-          </div>	
+		<img src={LOGO_SRC} alt="Nourished formulaic" className="h-7 md:h-9" />	
 			{meta.blurb && (
             <p className="mt-6 text-base md:text-lg text-center md:text-left" style={{ color: BRAND.text }}>
               {meta.blurb}
