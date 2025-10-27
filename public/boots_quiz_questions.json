@@ -152,8 +152,8 @@
   {
     "id": "health_which_of_the_below_are_your_top_two_prior",
     "category": "Health",
-    "title": "Which of the below are your top two priorities in the upcoming months?",
-    "type": "multi",
+    "title": "Which of the below is your top priority in the upcoming months?",
+    "type": "single",
     "options": [
       "Support balancing stress",
       "More energy",
