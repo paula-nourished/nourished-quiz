@@ -611,30 +611,7 @@ function ProductResultView({ code, tallies, kiosk }) {
             onError={(e) => (e.currentTarget.style.display = "none")}
           />
 
-          {/* Compact counts line + neat list */}
-          {counts.length > 0 && (
-            <div className="w-full mt-3">
-              <div className="text-sm opacity-80 text-center md:text-left">
-                {counts.map(([c, v], i) => (
-                  <span key={c}>
-                    {c} {v}
-                    {i < counts.length - 1 ? " • " : ""}
-                  </span>
-                ))}
-              </div>
-              <div
-                className="mt-3 grid gap-1 text-left text-sm"
-                style={{ width: "min(520px, 90%)", marginInline: "auto" }}
-              >
-                {counts.map(([c, v]) => (
-                  <div key={c} className="flex justify-between">
-                    <span>{c}</span>
-                    <span>{v}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+         
         </div>
 
         {/* Right: pack shot */}
