@@ -625,17 +625,17 @@ function ProductResultView({ code, tallies, kiosk }) {
 
   return (
     <div
-      className="rounded-[28px] border p-6 md:p-8"
+      className="rounded-[28px] border p-6 md:p-20"
       style={{ borderColor: BRAND.border, background: "rgba(255,255,255,.92)" }}
     >
 
 
       {/* Two-column body: exploded left, pack right */}
-      <div className="grid gap-6 md:gap-5 md:grid-cols-2 items-center">
+      <div className="grid gap-6 md:gap-10 md:grid-cols-2 items-center">
         {/* Left: exploded + blurb + counts */}
 		  
         <div className="order-2 md:order-1">
-		<img src={LOGO_SRC} alt="Nourished formulaic" className="h-7 md:h-9" />	
+		<img src={LOGO_SRC} alt="Nourished formulaic" className="h-7 md:h-14" />	
 			{meta.blurb && (
             <p className="mt-6 text-base md:text-lg text-center md:text-left" style={{ color: BRAND.text }}>
               {meta.blurb}
@@ -659,17 +659,7 @@ function ProductResultView({ code, tallies, kiosk }) {
                   </span>
                 ))}
               </div>
-              <div
-                className="mt-3 grid gap-1 text-left text-sm"
-                style={{ width: "min(520px, 90%)", marginInline: "auto" }}
-              >
-                {counts.map(([c, v]) => (
-                  <div key={c} className="flex justify-between">
-                    <span>{c}</span>
-                    <span>{v}</span>
-                  </div>
-                ))}
-              </div>
+             
             </div>
           )}
         </div>
