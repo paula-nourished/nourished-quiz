@@ -149,6 +149,11 @@ function Button({ children, onClick, type = "button", disabled, kiosk, bg, textC
 
 // ---- idle/attract
 function AttractScreen({ onStart, kiosk }) {
+  const handleStart = () => {
+    // guard in case onStart wasn't provided
+    if (typeof onStart === "function") onStart();
+  };
+
   return (
     <Stage kiosk={kiosk}>
       <div style={{ textAlign: "center" }}>
@@ -159,28 +164,36 @@ function AttractScreen({ onStart, kiosk }) {
           draggable="false"
           style={{ width: "min(66%, 480px)", marginBottom: "8%" }}
         />
-        <h1 className={kiosk ? "text-5xl" : "text-4xl"} style={{ fontWeight: 700, marginBottom: 12, color: BRAND.text }}>
+        <h1
+          className={kiosk ? "text-5xl" : "text-4xl"}
+          style={{ fontWeight: 700, marginBottom: 12, color: BRAND.text }}
+        >
           Find your perfect stack
         </h1>
-        <p className={kiosk ? "text-xl" : "text-xl"} style={{ color: BRAND.text, opacity: 0.85, marginBottom: 24 }}>
+        <p
+          className={kiosk ? "text-xl" : "text-xl"}
+          style={{ color: BRAND.text, opacity: 0.85, marginBottom: 24 }}
+        >
           Answer a few quick questions and we’ll match you to the right Nourished formula.
         </p>
+
         <div className="mx-auto" style={{ maxWidth: 360 }}>
-          <Button kiosk={kiosk} onClick={onStart} bg="#e2c181" textColor="#153247">
+          <Button kiosk={kiosk} onClick={handleStart} bg="#e2c181" textColor="#153247">
             Get Started
           </Button>
         </div>
+
         <p className="mt-10 text-sm px-[10%]" style={{ color: BRAND.text, opacity: 0.85, marginBottom: 24 }}>
           Please note: This quiz is designed to help you select a personalised vitamin stack based on your lifestyle and
           wellness goals. It is not intended to diagnose or treat any medical condition. If you are pregnant,
           breastfeeding, taking medication or under medical supervision, please consult a healthcare professional before
           taking any supplements.
         </p>
-		<img
+
+        <img
           src="/periodic.png"
           alt="Nourished Formula"
-            className="relative bottom-0 left-0 w-full h-auto mx-auto"
-  draggable="false"
+          className="relative bottom-0 left-0 w-full h-auto mx-auto"
           draggable="false"
         />
       </div>
