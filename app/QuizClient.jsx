@@ -244,7 +244,7 @@ function getAnswerIconPath(label) {
   if (key === "yes") return "/icons/yes.svg";
   if (key.includes("sometimes") || key.includes("maybe")) return "/icons/maybe.svg";
 
-  return "/icons/sparkles.svg"; // fallback
+  return "/icons/none.svg"; // fallback
 }
 
 // ---- helpers
@@ -483,6 +483,7 @@ function PeriodicOptions({ options, value, onChange, kiosk, getIconPath = getAns
                     src={iconPath}
                     alt=""
                     draggable="false"
+					  className="filter invert brightness-0"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
@@ -565,6 +566,7 @@ function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect
                     src={iconPath}
                     alt=""
                     draggable="false"
+					  className="filter invert brightness-0"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
