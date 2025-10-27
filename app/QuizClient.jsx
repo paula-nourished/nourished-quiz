@@ -343,59 +343,26 @@ function scoreAnswers(answers, weightsMap, questions) {
   return tallies; // e.g. { Eic: 3, Mjb: 2, ... }
 }
 
-// ---- priority helpers (tie-break logic)
-function findPrioritiesWeightsKey(weightsMap = {}) {
-  const keys = Object.keys(weightsMap || {});
-  return (
-    keys.find((t) =>
-      /which of the below are your top(?:\s+(?:one|1|two|2))?\s+priorit/i.test(
-        String(t)
-      )
-    ) || null
-  );
-}
-
-function getPrioritySelection(answers = {}, weightsMap = {}) {
-  const priKey = findPrioritiesWeightsKey(weightsMap);
-  if (!priKey)
-    return { priKey: null, priLabel: null, priProducts: [] };
-
-  const priLabel = answers[priKey] ? String(answers[priKey]) : null;
-  const priProducts =
-    priLabel && weightsMap[priKey]?.[priLabel]
-      ? weightsMap[priKey][priLabel] || []
-      : [];
-
-  return { priKey, priLabel, priProducts };
-}
-
-// ---- choose the winning product code from tallies (with priorities tie-break)
+// ---- choose the winning product code from tallies
 function pickWinner(tallies = {}, answers = {}, weightsMap = {}) {
+  // 1) No scores? no winner.
   const entries = Object.entries(tallies).filter(([, v]) => v > 0);
   if (!entries.length) return null;
 
+  // 2) Highest score first
   const max = Math.max(...entries.map(([, v]) => v));
   let candidates = entries.filter(([, v]) => v === max).map(([code]) => code);
 
   if (candidates.length === 1) return candidates[0];
 
-  // Priorities tie-break
-  const { priProducts } = getPrioritySelection(answers, weightsMap);
-  if (priProducts && priProducts.length) {
-    const priSet = new Set(priProducts);
-    const intersect = candidates.filter((c) => priSet.has(c));
-    if (intersect.length === 1) return intersect[0];
-    if (intersect.length > 1) candidates = intersect;
-  }
-
-  // Stable order tie-break
+  // 3) Tie-break #1: stable product order
   const orderIndex = (code) => {
     const i = PRODUCT_ORDER.indexOf(code);
     return i === -1 ? Number.POSITIVE_INFINITY : i;
   };
   candidates.sort((a, b) => orderIndex(a) - orderIndex(b));
 
-  // Lexicographic fallback
+  // 4) Tie-break #2: lexicographic as final fallback
   candidates.sort((a, b) => {
     const oa = orderIndex(a);
     const ob = orderIndex(b);
@@ -405,7 +372,6 @@ function pickWinner(tallies = {}, answers = {}, weightsMap = {}) {
 
   return candidates[0] || null;
 }
-
 
 
 // ---- generic answer chip (legacy multi)
