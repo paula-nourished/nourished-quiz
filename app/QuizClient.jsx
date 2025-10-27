@@ -343,8 +343,8 @@ function scoreAnswers(answers, weightsMap, questions) {
   return tallies; // e.g. { Eic: 3, Mjb: 2, ... }
 }
 
-// ---- choose the winning product code from tallies
-function pickWinner(tallies = {}, answers = {}, weightsMap = {}) {
+// ---- choose the winning product code from tallies (priority answer tie-break)
+function pickWinner(tallies = {}, answers = {}, weightsMap = {}, questions = []) {
   // 1) No scores? no winner.
   const entries = Object.entries(tallies).filter(([, v]) => v > 0);
   if (!entries.length) return null;
@@ -355,14 +355,51 @@ function pickWinner(tallies = {}, answers = {}, weightsMap = {}) {
 
   if (candidates.length === 1) return candidates[0];
 
-  // 3) Tie-break #1: stable product order
+  // 3) PRIORITY TIE-BREAK: use the selected priority and its mapping in weights JSON
+  const priTitle = Object.keys(weightsMap || {}).find(
+    (t) => t.trim().toLowerCase() === PRIORITIES_TITLE.trim().toLowerCase()
+  ) || PRIORITIES_TITLE;
+
+  // look up the priorities question (to translate id -> label if needed)
+  const priQ = (questions || []).find(
+    (q) => String(q?.title || "").trim().toLowerCase() === String(priTitle).trim().toLowerCase()
+  );
+
+  // retrieve the stored answer (we save under both id and title)
+  let raw = answers[priTitle];
+  if (raw == null && priQ) raw = answers[priQ.id];
+
+  // normalise to a single label
+  let priLabel = null;
+  if (Array.isArray(raw)) raw = raw[0];        // legacy safety; you now use single-select
+  if (raw != null) {
+    const s = String(raw);
+    // if it's already a label present in the weights, keep it
+    if (weightsMap?.[priTitle] && Object.prototype.hasOwnProperty.call(weightsMap[priTitle], s)) {
+      priLabel = s;
+    } else if (priQ) {
+      // translate id -> label via the question's answers
+      const hit = (priQ.answers || []).find((a) => String(a.id) === s);
+      if (hit?.label) priLabel = String(hit.label);
+    }
+  }
+
+  // if we got a valid priority label, narrow candidates to SKUs mapped by that label
+  if (priLabel && weightsMap?.[priTitle]?.[priLabel]) {
+    const prefer = new Set(weightsMap[priTitle][priLabel]);
+    const narrowed = candidates.filter((c) => prefer.has(c));
+    if (narrowed.length === 1) return narrowed[0];
+    if (narrowed.length > 1) candidates = narrowed; // still tied, but now only amongst preferred SKUs
+  }
+
+  // 4) Stable product order tie-break
   const orderIndex = (code) => {
     const i = PRODUCT_ORDER.indexOf(code);
     return i === -1 ? Number.POSITIVE_INFINITY : i;
   };
   candidates.sort((a, b) => orderIndex(a) - orderIndex(b));
 
-  // 4) Tie-break #2: lexicographic as final fallback
+  // 5) Lexicographic as final fallback
   candidates.sort((a, b) => {
     const oa = orderIndex(a);
     const ob = orderIndex(b);
@@ -1194,8 +1231,8 @@ function setAnswer(qid, value, mode = "single") {
     <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
 
       {(() => {
-        const tallies = scoreAnswers(answers, weights, questions);
-        const winner = pickWinner(tallies, answers, weights);
+const tallies = scoreAnswers(answers, weights, questions);
+const winner = pickWinner(tallies, answers, weights, questions);
 
         if (!winner) {
           return (
