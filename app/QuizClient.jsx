@@ -60,9 +60,9 @@ Spe: { name: "Spe", title: "Skin Health • Psychological Function • Energy", 
 const LOGO_SRC = "/nourished-formula-logo.svg";
 
 // Must exactly match the priorities question title in the sheet/weights JSON
-const PRIORITIES_TITLE = "Which of the below are your top two priorities in the upcoming months?";
-const isPriorities = (q) =>
-  String(q?.title || "").trim().toLowerCase() === PRIORITIES_TITLE.trim().toLowerCase();
+// const PRIORITIES_TITLE = "Which of the below are your top two priorities in the upcoming months?";
+// const isPriorities = (q) =>
+//  String(q?.title || "").trim().toLowerCase() === PRIORITIES_TITLE.trim().toLowerCase();
 
 
 // ---- utilities
@@ -270,7 +270,11 @@ function titleIncludes(q, substr) {
 function isNo(val) {
   return String(val ?? "").toLowerCase() === "no";
 }
-
+function isPriorities(q) {
+  const t = String(q?.title || "").toLowerCase().trim();
+  // works for "top two priorities", "top priority", etc.
+  return /which of the below.*top(?:\s+(?:one|1|two|2))?\s+priorit/.test(t);
+}
 // ---- scoring helpers
 function buildOptionLabelIndex(questions) {
   // title -> { id -> label }
@@ -343,8 +347,8 @@ function scoreAnswers(answers, weightsMap, questions) {
   return tallies; // e.g. { Eic: 3, Mjb: 2, ... }
 }
 
-// ---- choose the winning product code from tallies
-function pickWinner(tallies = {}, answers = {}, weightsMap = {}) {
+// ---- choose the winning product code from tallies (priority-aware tie-break)
+function pickWinner(tallies = {}, answers = {}, weightsMap = {}, questions = []) {
   // 1) No scores? no winner.
   const entries = Object.entries(tallies).filter(([, v]) => v > 0);
   if (!entries.length) return null;
@@ -355,14 +359,27 @@ function pickWinner(tallies = {}, answers = {}, weightsMap = {}) {
 
   if (candidates.length === 1) return candidates[0];
 
-  // 3) Tie-break #1: stable product order
+  // 3) PRIORITIES tie-breaker
+  const priLabel = getSelectedPriorityLabel(answers, questions);
+  if (priLabel) {
+    const priKeywords = keywordsForPriority(priLabel);
+    const scored = candidates.map((c) => [c, scoreCandidateByPriority(c, priKeywords)]);
+    const top = Math.max(...scored.map(([, s]) => s));
+    if (top > 0) {
+      const narrowed = scored.filter(([, s]) => s === top).map(([c]) => c);
+      if (narrowed.length === 1) return narrowed[0];
+      candidates = narrowed; // still tied → narrowed by relevance
+    }
+  }
+
+  // 4) Stable product order
   const orderIndex = (code) => {
     const i = PRODUCT_ORDER.indexOf(code);
     return i === -1 ? Number.POSITIVE_INFINITY : i;
   };
   candidates.sort((a, b) => orderIndex(a) - orderIndex(b));
 
-  // 4) Tie-break #2: lexicographic as final fallback
+  // 5) Lexicographic fallback
   candidates.sort((a, b) => {
     const oa = orderIndex(a);
     const ob = orderIndex(b);
@@ -372,7 +389,6 @@ function pickWinner(tallies = {}, answers = {}, weightsMap = {}) {
 
   return candidates[0] || null;
 }
-
 
 // ---- generic answer chip (legacy multi)
 function AnswerChip({ selected, children, onClick, kiosk }) {
@@ -817,6 +833,7 @@ function setAnswer(qid, value, mode = "single") {
     if (current.required === false) return true;
     const v = answers[current.id];
     if (isExercise(current)) return Array.isArray(v) && v.length > 0;
+    if (isPriorities(current)) return Boolean(v); // single select chosen
     return current.type === "multi" ? true : Boolean(v);
   }
 
@@ -825,6 +842,8 @@ function setAnswer(qid, value, mode = "single") {
   const isWhichDiet = (q) => titleIncludes(q, "which diet");
   const isProcessed = (q) => titleIncludes(q, "how often do you consume processed food") || titleIncludes(q, "how often do you eat processed");
   const isExercise = (q) => titleIncludes(q, "when you exercise") || titleIncludes(q, "what kind of exercise");
+ // const isPriorities = (q) =>
+   // String(q?.title || "") === "Which of the below are your top two priorities in the upcoming months?";
   const isActiveWeek = (q) => titleIncludes(q, "how active are you in a typical week");
   const isGender = (q) => /are you\b|gender/i.test(q?.title || "");
 
@@ -1014,7 +1033,7 @@ function setAnswer(qid, value, mode = "single") {
 
                   {/* Body */}
                   {(() => {
-// priorities (was multi-limit-2) → now single-select with icons
+                   // priorities → single-select with icons
 if (isPriorities(current)) {
   const val = answers[current.id] || "";
   return (
