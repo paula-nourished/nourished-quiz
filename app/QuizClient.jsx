@@ -148,13 +148,10 @@ function Button({ children, onClick, type = "button", disabled, kiosk, bg, textC
 }
 
 // ---- idle/attract
-function AttractScreen({ onStart, kiosk }) {
-  const handleStart = () => {
-    // guard in case onStart wasn't provided
-    if (typeof onStart === "function") onStart();
-  };
 
+function AttractScreen({ onStart, kiosk }) {
   return (
+
     <Stage kiosk={kiosk}>
       <div style={{ textAlign: "center" }}>
         <img
