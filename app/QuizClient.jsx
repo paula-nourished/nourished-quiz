@@ -162,7 +162,7 @@ function AttractScreen({ onStart, kiosk }) {
         <h1 className={kiosk ? "text-5xl" : "text-4xl"} style={{ fontWeight: 700, marginBottom: 12, color: BRAND.text }}>
           Find your perfect stack
         </h1>
-        <p className={kiosk ? "text-xl" : "text-lg"} style={{ color: BRAND.text, opacity: 0.85, marginBottom: 24 }}>
+        <p className={kiosk ? "text-xl" : "text-xl"} style={{ color: BRAND.text, opacity: 0.85, marginBottom: 24 }}>
           Answer a few quick questions and we’ll match you to the right Nourished formula.
         </p>
         <div className="mx-auto" style={{ maxWidth: 360 }}>
@@ -170,7 +170,7 @@ function AttractScreen({ onStart, kiosk }) {
             Get Started
           </Button>
         </div>
-        <p style={{ fontWeight: 300, marginTop: 40, color: BRAND.text, fontSize: 12 }}>
+        <p className="mt-10 text-sm px-[10%]" style={{ color: BRAND.text, opacity: 0.85, marginBottom: 24 }}>
           Please note: This quiz is designed to help you select a personalised vitamin stack based on your lifestyle and
           wellness goals. It is not intended to diagnose or treat any medical condition. If you are pregnant,
           breastfeeding, taking medication or under medical supervision, please consult a healthcare professional before
@@ -528,7 +528,7 @@ function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect
   return (
     <div
       role="group"
-      className="grid gap-4 justify-items-stretch grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      className="grid gap-4 justify-items-stretch grid-cols-2 md:grid-cols-3 lg:grid-cols-3"
       style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", boxSizing: "border-box" }}
     >
       {(options || []).map((opt, i) => {
@@ -625,7 +625,7 @@ function ProductResultView({ code, tallies, kiosk }) {
 
   return (
     <div
-      className="rounded-[28px] border p-6 md:p-20"
+      className="rounded-[28px] border p-6 md:p-14"
       style={{ borderColor: BRAND.border, background: "rgba(255,255,255,.92)" }}
     >
 
@@ -905,8 +905,8 @@ function setAnswer(qid, value, mode = "single") {
           -webkit-appearance: none;
           appearance: none;
           width: 100%;
-          height: 14px;
-          border-radius: 7px;
+          height: 34px;
+          border-radius: 27px;
           background: #ffffff;
           outline: none;
         }
@@ -1259,18 +1259,6 @@ const winner = pickWinner(tallies, answers, weights, questions);
 
             {/* Bottom buttons */}
             <div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
-              <Button
-                kiosk={kiosk}
-                onClick={() => {
-                  postToParent({
-                    type: "NOURISHED_QUIZ_EVENT",
-                    event: "results_continue_clicked",
-                    payload: { winner }
-                  });
-                }}
-              >
-                Continue
-              </Button>
               <Button
                 kiosk={kiosk}
                 onClick={() => {
