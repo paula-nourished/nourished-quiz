@@ -60,7 +60,7 @@ Spe: { name: "Spe", title: "Skin Health • Psychological Function • Energy", 
 const LOGO_SRC = "/nourished-formula-logo.svg";
 
 // Must exactly match the priorities question title in the sheet/weights JSON
-const PRIORITIES_TITLE = "Which of the below are your top two priorities in the upcoming months?";
+const PRIORITIES_TITLE = "What’s your main wellness priority at the moment?";
 const isPriorities = (q) =>
   String(q?.title || "").trim().toLowerCase() === PRIORITIES_TITLE.trim().toLowerCase();
 
@@ -865,7 +865,7 @@ function setAnswer(qid, value, mode = "single") {
   const isProcessed = (q) => titleIncludes(q, "how often do you consume processed food") || titleIncludes(q, "how often do you eat processed");
   const isExercise = (q) => titleIncludes(q, "when you exercise") || titleIncludes(q, "what kind of exercise");
   const isPriorities = (q) =>
-    String(q?.title || "") === "Which of the below are your top two priorities in the upcoming months?";
+    String(q?.title || "") === "What’s your main health priority at the moment?";
   const isActiveWeek = (q) => titleIncludes(q, "how active are you in a typical week");
   const isGender = (q) => /are you\b|gender/i.test(q?.title || "");
 
