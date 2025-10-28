@@ -115,8 +115,8 @@ function Stage({ kiosk, children }) {
     >
       <div
         style={{
-          width: "100vw",
-          maxWidth: "100vw",
+          width: "90vw",
+          maxWidth: "90vw",
           marginInline: "auto",
         }}
       >
@@ -444,8 +444,8 @@ function PeriodicOptions({ options, value, onChange, kiosk, getIconPath = getAns
     [grid-template-columns:repeat(auto-fit,minmax(280px,280px))]
     max-w-[calc(4*280px+3*1rem)]"
       style={{
-        width: "100vw",
-        maxWidth: "100vw",
+        width: "90vw",
+        maxWidth: "90vw",
         marginInline: "auto",
         boxSizing: "border-box",
 	justifyContent: "center"
@@ -530,7 +530,7 @@ function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect
     <div
       role="group"
       className="grid gap-4 justify-items-stretch grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
-      style={{ width: "100vw", maxWidth: "100vw", marginInline: "auto", boxSizing: "border-box" }}
+      style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", boxSizing: "border-box" }}
     >
       {(options || []).map((opt, i) => {
         const sel = selectedSet.has(opt.id);
@@ -966,7 +966,7 @@ function setAnswer(qid, value, mode = "single") {
 
 		{isLoading && (
   <Stage kiosk={kiosk}>
-    <div style={{ width: "100vw", maxWidth: "100vw", marginInline: "auto", textAlign: "center" }}>
+    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
       <h2 className={kiosk ? "text-3xl" : "text-2xl"} style={{ fontWeight: 600, marginBottom: 12 }}>
         Loading quiz…
       </h2>
@@ -1021,7 +1021,7 @@ function setAnswer(qid, value, mode = "single") {
           ) : (
             <Stage kiosk={kiosk}>
               {!loading && current && (
-                <section style={{ width: "100vw", maxWidth: "100vw", marginInline: "auto" }}>
+                <section style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto" }}>
                   {/* Titles */}
                   {isProcessed(current) ? (
                     <>
@@ -1088,7 +1088,7 @@ function setAnswer(qid, value, mode = "single") {
                       const val = Number(answers[current.id] || 3);
                       const fillPct = Math.max(0, Math.min(100, ((val - 1) / 4) * 100)); // 1..5 → 0..100%
                       return (
-                        <div style={{ width: "100vw", maxWidth: "100vw", marginInline: "auto" }}>
+                        <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto" }}>
                           <div
                             className="flex justify-between"
                             style={{ fontSize: kiosk ? "1.5rem" : "1.1rem", fontWeight: 700, marginBottom: 16 }}
@@ -1161,7 +1161,7 @@ function setAnswer(qid, value, mode = "single") {
                         <div
                           role="group"
                           aria-labelledby={`q-${current.id}`}
-                          style={{ width: "100vw", maxWidth: "100vw", marginInline: "auto" }}
+                          style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto" }}
                         >
                           {(current.answers || []).map((a) => {
                             const selected = (answers[current.id] || []).includes(a.id);
