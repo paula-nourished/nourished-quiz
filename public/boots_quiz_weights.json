@@ -43,7 +43,7 @@
     "3-4 times a day": ["Bmca"],
     "5+ times": ["Gsi"]
   },
-  "Which of the below are your top two priorities in the upcoming months?": {
+  "What’s your main health priority at the moment?": {
     "Support balancing stress": ["Epi"],
     "More energy": ["Ecp"],
     "Better immunity": ["Eic"],
