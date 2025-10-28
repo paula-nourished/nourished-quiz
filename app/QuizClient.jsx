@@ -472,7 +472,7 @@ function PeriodicOptions({ options, value, onChange, kiosk, getIconPath = getAns
               color: BRAND.text,
             }}
           >
-            <div className="flex items-center gap-5" style={{ padding: kiosk ? 24 : 10 }}>
+            <div className="flex items-center gap-5" style={{ padding: kiosk ? 16: 10 }}>
               <div
                 className="rounded-2xl shrink-0 grid place-items-center"
                 style={{ width: iconSize, height: iconSize, background: col.bg }}
@@ -1026,7 +1026,7 @@ function setAnswer(qid, value, mode = "single") {
                   {isProcessed(current) ? (
                     <>
                       <h2
-                        className={kiosk ? "text-5xl" : "text-3xl"}
+                        className={kiosk ? "text-4xl" : "text-3xl"}
                         style={{ fontWeight: 700, marginBottom: kiosk ? 12 : 10, textAlign: "center", lineHeight: 1.15 }}
                       >
                         How often do you eat processed foods in a typical day?
@@ -1046,7 +1046,7 @@ function setAnswer(qid, value, mode = "single") {
                     </>
                   ) : (
                     <h2
-                      className={kiosk ? "text-5xl" : "text-3xl"}
+                      className={kiosk ? "text-4xl" : "text-3xl"}
                       style={{ fontWeight: 700, marginBottom: kiosk ? 36 : 28, textAlign: "center", lineHeight: 1.15 }}
                     >
                       {current.title}
