@@ -152,7 +152,7 @@
   {
     "id": "health_which_of_the_below_are_your_top_two_prior",
     "category": "Health",
-    "title": "What’s your main health priority at the moment?",
+    "title": "What is your main wellness priority at the moment?",
     "type": "multi",
     "options": [
       "Support balancing stress",
