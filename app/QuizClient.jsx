@@ -109,7 +109,7 @@ function Stage({ kiosk, children }) {
         minHeight: kiosk ? "100dvh" : "80dvh",
         display: "grid",
         placeItems: "center",
-        paddingBlock: kiosk ? 24 : 16,
+        paddingBlock: kiosk ? 16 : 16,
         boxSizing: "border-box",
       }}
     >
