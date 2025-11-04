@@ -491,7 +491,12 @@ function PeriodicOptions({ options, value, onChange, kiosk, getIconPath = getAns
                   />
                 )}
               </div>
-              <div className={`${kiosk ? "text-2xl" : "text-xl"} font-semibold leading-snug`}>{opt.label}</div>
+              <div className="flex flex-col leading-snug">
+  <span className={`${kiosk ? "text-2xl" : "text-xl"} font-semibold`}>{opt.label}</span>
+  {opt.sublabel && (
+    <span className="text-xs text-slate-500 mt-1">{opt.sublabel}</span>
+  )}
+</div>
             </div>
 
             {sel && (
