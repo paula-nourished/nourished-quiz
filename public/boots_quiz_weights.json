@@ -43,7 +43,7 @@
     "3-4 times a day": ["Bmca"],
     "5+ times": ["Gsi"]
   },
-  "What is your main wellness priority at the moment?": {
+  "What are your top two wellness priorities at the moment?": {
     "Support balancing stress": ["Epi"],
     "More energy": ["Ecp"],
     "Better immunity": ["Eic"],
