@@ -250,22 +250,30 @@ function getAnswerIconPath(label) {
 // ---- helpers
 function normalizeOptionsFromAny(q, idx) {
   let raw = q.options ?? q.answers ?? q.choices ?? [];
-  if (typeof raw === "string") raw = raw.split(/[,;|]/g).map((s) => s.trim()).filter(Boolean);
-if (Array.isArray(raw) && raw.every(v => typeof v === "string")) {
-  return raw.map((s) => {
-    const match = s.match(/^(.*?)\s*\((.*?)\)\s*$/);
-    const label = match ? match[1].trim() : s.trim();
-    const sublabel = match ? `e.g. ${match[2].trim()}` : null;
-    return { id: s, label, sublabel };
-  });
-}
+  if (typeof raw === "string") {
+    raw = raw.split(/[,;|]/g).map((s) => s.trim()).filter(Boolean);
+  }
+
+  // 1. Strings → extract ( ... ) into sublabel
+  if (Array.isArray(raw) && raw.every(v => typeof v === "string")) {
+    return raw.map((s) => {
+      const match = s.match(/^(.*?)\s*\((.*?)\)\s*$/);
+      const label = match ? match[1].trim() : s.trim();
+      const sublabel = match ? `e.g. ${match[2].trim()}` : null;
+      return { id: s, label, sublabel };
+    });
+  }
+
+  // 2. Objects → keep any sublabel if it exists
   if (Array.isArray(raw) && raw.length && typeof raw[0] === "object") {
     return raw.map((o, i) => {
       const id = String(o.id ?? o.value ?? o.code ?? o.label ?? `${idx}_${i}`);
       const label = String(o.label ?? o.name ?? o.text ?? o.value ?? o.id ?? id);
-      return { id, label };
+      const sublabel = o.sublabel ?? null;
+      return { id, label, sublabel };
     });
   }
+
   return [];
 }
 function titleIncludes(q, substr) {
