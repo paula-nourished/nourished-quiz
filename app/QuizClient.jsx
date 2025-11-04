@@ -252,7 +252,18 @@ function normalizeOptionsFromAny(q, idx) {
   let raw = q.options ?? q.answers ?? q.choices ?? [];
   if (typeof raw === "string") raw = raw.split(/[,;|]/g).map((s) => s.trim()).filter(Boolean);
 if (Array.isArray(raw) && raw.every((v) => typeof v === "string")) {
-  return raw.map((s) => ({ id: s, label: s, sublabel: s }));
+  return raw.map((s) => {
+    // Split "Label (something)" into main + inside brackets
+    const match = s.match(/^(.*?)(?:\s*\((.*)\))?$/);
+    const main = match ? match[1].trim() : s;
+    const extra = match && match[2] ? match[2].trim() : null;
+
+    return {
+      id: s,                 // keep full string as stable ID
+      label: main,           // e.g. "Running or Cardio"
+      sublabel: extra ? `e.g. ${extra}` : undefined  // e.g. "e.g. treadmill, cycling, HIIT"
+    };
+  });
 }
   if (Array.isArray(raw) && raw.length && typeof raw[0] === "object") {
     return raw.map((o, i) => {
