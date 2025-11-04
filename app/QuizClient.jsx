@@ -828,14 +828,15 @@ export default function QuizClient() {
     setStep(0);
   }, []);
 
-  const bumpIdle = useCallback(() => {
-    setIdle(false);
-    if (idleTimer.current) clearTimeout(idleTimer.current);
-    idleTimer.current = setTimeout(() => {
-      setIdle(true);
-      resetAll();
-    }, IDLE_MS);
-  }, [IDLE_MS, resetAll]);
+const bumpIdle = useCallback(() => {
+  setIdle(false);
+  if (idleTimer.current) clearTimeout(idleTimer.current);
+  idleTimer.current = setTimeout(() => {
+    setIdle(true);
+    resetAll();
+    setStep(0); // ensure it always returns to intro
+  }, IDLE_MS);
+}, [IDLE_MS, resetAll]);
 
   useEffect(() => {
     const onAny = () => bumpIdle();
