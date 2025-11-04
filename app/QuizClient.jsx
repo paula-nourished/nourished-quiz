@@ -256,24 +256,29 @@ function normalizeOptionsFromAny(q, idx) {
 
   // 1. Strings → extract ( ... ) into sublabel
   if (Array.isArray(raw) && raw.every(v => typeof v === "string")) {
-    return raw.map((s) => {
+    const result = raw.map((s) => {
       const match = s.match(/^(.*?)\s*\((.*?)\)\s*$/);
       const label = match ? match[1].trim() : s.trim();
       const sublabel = match ? `e.g. ${match[2].trim()}` : null;
       return { id: s, label, sublabel };
     });
+    console.log("string branch output", q.id, result);
+    return result;
   }
 
   // 2. Objects → keep any sublabel if it exists
-if (Array.isArray(raw) && raw.length && typeof raw[0] === "object") {
-  return raw.map((o, i) => {
-    const id = String(o.id ?? o.value ?? o.code ?? o.label ?? `${idx}_${i}`);
-    const label = String(o.label ?? o.name ?? o.text ?? o.value ?? o.id ?? id);
-    const sublabel = typeof o.sublabel === "string" ? o.sublabel : null;
-    return { id, label, sublabel };
-  });
-}
+  if (Array.isArray(raw) && raw.length && typeof raw[0] === "object") {
+    const result = raw.map((o, i) => {
+      const id = String(o.id ?? o.value ?? o.code ?? o.label ?? `${idx}_${i}`);
+      const label = String(o.label ?? o.name ?? o.text ?? o.value ?? o.id ?? id);
+      const sublabel = typeof o.sublabel === "string" ? o.sublabel : null;
+      return { id, label, sublabel };
+    });
+    console.log("object branch output", q.id, result);
+    return result;
+  }
 
+  console.log("normalizeOptionsFromAny (fallback)", q.id, raw);
   return [];
 }
 function titleIncludes(q, substr) {
