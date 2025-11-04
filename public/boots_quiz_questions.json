@@ -80,24 +80,24 @@
     "required": true
   },
 
-  {
-    "id": "exercise_when_you_exercise_what_do_you_do",
-    "category": "Exercise",
-    "title": "What kind of exercise do you usually do?",
-    "type": "multi",
-    "options": [
-      "Running or Cardio (e.g. treadmill, cycling, HIIT)",
-      "Weights or Resistance Training",
-      "Classes (e.g. yoga, Pilates, spin, dance)",
-      "Organised Sports (e.g. football, tennis, netball)",
-      "Crossfit / Hyrox",
-      "Boxing or Combat Training",
-      "Walking or Hiking",
-      "Other",
-      "None"
-    ],
-    "required": true
-  },
+{
+  "id": "exercise_when_you_exercise_what_do_you_do",
+  "category": "Exercise",
+  "title": "What kind of exercise do you usually do?",
+  "type": "multi",
+  "options": [
+    { "label": "Running or Cardio", "sublabel": "e.g. treadmill, cycling, HIIT" },
+    { "label": "Weights or Resistance Training" },
+    { "label": "Classes", "sublabel": "e.g. yoga, Pilates, spin, dance" },
+    { "label": "Organised Sports", "sublabel": "e.g. football, tennis, netball" },
+    { "label": "Crossfit / Hyrox" },
+    { "label": "Boxing or Combat Training" },
+    { "label": "Walking or Hiking" },
+    { "label": "Other" },
+    { "label": "None" }
+  ],
+  "required": true
+}
     {
     "id": "health_do_you_wear_glasses_or_use_contact_lenses",
     "category": "Health",
