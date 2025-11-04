@@ -265,14 +265,14 @@ function normalizeOptionsFromAny(q, idx) {
   }
 
   // 2. Objects → keep any sublabel if it exists
-  if (Array.isArray(raw) && raw.length && typeof raw[0] === "object") {
-    return raw.map((o, i) => {
-      const id = String(o.id ?? o.value ?? o.code ?? o.label ?? `${idx}_${i}`);
-      const label = String(o.label ?? o.name ?? o.text ?? o.value ?? o.id ?? id);
-      const sublabel = o.sublabel ?? null;
-      return { id, label, sublabel };
-    });
-  }
+if (Array.isArray(raw) && raw.length && typeof raw[0] === "object") {
+  return raw.map((o, i) => {
+    const id = String(o.id ?? o.value ?? o.code ?? o.label ?? `${idx}_${i}`);
+    const label = String(o.label ?? o.name ?? o.text ?? o.value ?? o.id ?? id);
+    const sublabel = typeof o.sublabel === "string" ? o.sublabel : null;
+    return { id, label, sublabel };
+  });
+}
 
   return [];
 }
