@@ -251,9 +251,17 @@ function getAnswerIconPath(label) {
 function normalizeOptionsFromAny(q, idx) {
   let raw = q.options ?? q.answers ?? q.choices ?? [];
   if (typeof raw === "string") raw = raw.split(/[,;|]/g).map((s) => s.trim()).filter(Boolean);
-  if (Array.isArray(raw) && raw.every((v) => typeof v === "string")) {
+if (Array.isArray(raw)) {
+  // if it's an array of strings → convert to objects
+  if (raw.every((v) => typeof v === "string")) {
     return raw.map((s) => ({ id: s, label: s }));
   }
+
+  // if it's already objects → keep as-is
+  if (raw.every((v) => typeof v === "object" && v.label)) {
+    return raw;
+  }
+}
   if (Array.isArray(raw) && raw.length && typeof raw[0] === "object") {
     return raw.map((o, i) => {
       const id = String(o.id ?? o.value ?? o.code ?? o.label ?? `${idx}_${i}`);
