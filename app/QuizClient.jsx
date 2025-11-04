@@ -632,6 +632,99 @@ function PeriodicOptionsMulti({ options, values = [], onToggle, kiosk, maxSelect
     </div>
   );
 }
+// ---- Multi-select icon tiles (limit 2 with priority)
+function PeriodicOptionsPriority({ options, values = [], onToggle, kiosk, maxSelect = 2 }) {
+  const selectedSet = new Set(values);
+  const disabledAll = values.length >= maxSelect;
+  const iconSize = kiosk ? 60 : 40;
+
+  return (
+    <div
+      role="group"
+      className="grid gap-4 justify-items-stretch grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+      style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", boxSizing: "border-box" }}
+    >
+      {(options || []).map((opt, i) => {
+        const index = values.indexOf(opt.id);
+        const sel = index !== -1;
+        const canClick = sel || !disabledAll;
+        const col = PERIODIC_PALETTE[i % PERIODIC_PALETTE.length];
+        const iconPath = getAnswerIconPath(opt.label);
+
+        return (
+          <button
+            key={opt.id}
+            type="button"
+            aria-pressed={sel ? "true" : "false"}
+            onClick={() => canClick && onToggle(opt.id)}
+            className={`relative w-full rounded-3xl transition-all text-left
+                        focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-2
+                        ${canClick ? "cursor-pointer" : "opacity-60 cursor-not-allowed"}`}
+            style={{
+              background: TILE.bg,
+              border: `2px solid ${sel ? TILE.borderActive : TILE.border}`,
+              boxShadow: sel ? TILE.shadowActive : TILE.shadow,
+              transform: sel ? "translateY(-1px)" : "none",
+              color: BRAND.text,
+            }}
+          >
+            <div className="flex items-center gap-5" style={{ padding: kiosk ? 18 : 10 }}>
+              <div
+                className="rounded-2xl shrink-0 grid place-items-center"
+                style={{ width: iconSize, height: iconSize, background: col.bg }}
+                aria-hidden="true"
+              >
+                {iconPath && (
+                  <img
+                    src={iconPath}
+                    alt=""
+                    draggable="false"
+                    className="filter invert brightness-0"
+                    onError={(e) => (e.currentTarget.style.display = "none")}
+                    style={{
+                      width: Math.round(iconSize * 0.7),
+                      height: Math.round(iconSize * 0.7),
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                  />
+                )}
+              </div>
+
+              <div className="flex flex-col leading-snug">
+                <span className={`${kiosk ? "text-2xl" : "text-xl"} font-semibold`}>
+                  {opt.label}
+                </span>
+                {opt.sublabel && (
+                  <span className="text-xs text-slate-500 mt-1">{opt.sublabel}</span>
+                )}
+              </div>
+            </div>
+
+            {sel && (
+              <div
+                aria-hidden
+                className="absolute top-3 right-3 rounded-full bg-white"
+                style={{
+                  width: kiosk ? 26 : 22,
+                  height: kiosk ? 26 : 22,
+                  border: "2px solid rgba(21,50,71,.9)",
+                  display: "grid",
+                  placeItems: "center",
+                  fontSize: kiosk ? 14 : 12,
+                  color: "#153247",
+                  fontWeight: 800,
+                }}
+              >
+                {index + 1}
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 // ---- Priorities = Multi with icons (max 2) – just reuse above
 const PeriodicOptionsMultiWithIcons = PeriodicOptionsMulti;
@@ -1094,18 +1187,18 @@ function setAnswer(qid, value, mode = "single") {
                    // } 
 
 // priorities → single-select with icons
- if (isPriorities(current)) {
-   const val = answers[current.id] || "";
-   return (
-     <PeriodicOptions
-       options={current.answers}
-       value={val}
-       onChange={(id) => setAnswer(current.id, id, "single")}
-       kiosk={kiosk}
-       getIconPath={getAnswerIconPath}
-     />
-   );
- }
+if (isPriorities(current)) {
+  const vals = Array.isArray(answers[current.id]) ? answers[current.id] : [];
+  return (
+    <PeriodicOptionsPriority
+      options={current.answers}
+      values={vals}
+      onToggle={(id) => setAnswer(current.id, id, "multi-limit-2")}
+      kiosk={kiosk}
+      maxSelect={2}
+    />
+  );
+}
 					
                     // slider (robust) or specific active-week title
                     if (current.type === "slider" || isActiveWeek(current)) {
