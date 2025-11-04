@@ -759,6 +759,9 @@ function ProductResultView({ code, tallies, kiosk }) {
             <p className="mt-6 text-base md:text-lg text-center md:text-left" style={{ color: BRAND.text }}>
               {meta.blurb}
             </p>
+		<p className="mt-6 text-lg text-center font-medium" style={{ color: "#153247", opacity: 0.9 }}>
+  Find <strong>{meta.name}</strong> on the shelf below and pick up your personalised stack today.
+</p>
           )}
           <img
             src={meta.images.exploded}
