@@ -97,7 +97,7 @@
     { "label": "None" }
   ],
   "required": true
-}
+},
     {
     "id": "health_do_you_wear_glasses_or_use_contact_lenses",
     "category": "Health",
