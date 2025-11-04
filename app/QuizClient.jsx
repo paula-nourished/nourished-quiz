@@ -1079,7 +1079,7 @@ function setAnswer(qid, value, mode = "single") {
    const val = answers[current.id] || "";
    return (
      <PeriodicOptions
-       options={current.answers}
+       options={current.options}
        value={val}
        onChange={(id) => setAnswer(current.id, id, "single")}
        kiosk={kiosk}
