@@ -760,7 +760,7 @@ function ProductResultView({ code, tallies, kiosk }) {
               {meta.blurb}
             </p>
 		<p className="mt-6 text-lg text-center font-medium" style={{ color: "#153247", opacity: 0.9 }}>
-  Find <strong>{meta.name}</strong> on the shelf below and pick up your personalised stack today.
+ Find <strong>{meta.name}</strong> on the shelf below to start your wellness journey today.
 </p>
           )}
           <img
