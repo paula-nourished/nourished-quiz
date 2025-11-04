@@ -86,15 +86,15 @@
   "title": "What kind of exercise do you usually do?",
   "type": "multi",
   "options": [
-    { "label": "Running or Cardio", "sublabel": "e.g. treadmill, cycling, HIIT" },
-    { "label": "Weights or Resistance Training" },
-    { "label": "Classes", "sublabel": "e.g. yoga, Pilates, spin, dance" },
-    { "label": "Organised Sports", "sublabel": "e.g. football, tennis, netball" },
-    { "label": "Crossfit / Hyrox" },
-    { "label": "Boxing or Combat Training" },
-    { "label": "Walking or Hiking" },
-    { "label": "Other" },
-    { "label": "None" }
+    "Running or Cardio (e.g. treadmill, cycling, HIIT)",
+    "Weights or Resistance Training",
+    "Classes (e.g. yoga, Pilates, spin, dance)",
+    "Organised Sports (e.g. football, tennis, netball)",
+    "Crossfit / Hyrox",
+    "Boxing or Combat Training",
+    "Walking or Hiking",
+    "Other",
+    "None"
   ],
   "required": true
 },
