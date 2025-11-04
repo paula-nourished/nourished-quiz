@@ -761,7 +761,15 @@ function ProductResultView({ code, tallies, kiosk }) {
             </p>
 		
           )}
-			<p className="mt-6 text-lg text-center font-medium" style={{ color: "#153247", opacity: 0.9 }}>
+			<p
+  className="mt-6 text-lg text-center font-medium border rounded-2xl px-4 py-3 inline-block mx-auto"
+  style={{
+    color: "#153247",
+    opacity: 0.9,
+    borderColor: "#d6d1c9",
+    background: "rgba(255,255,255,0.85)",
+  }}
+>
  Find <strong>{meta.name}</strong> on the shelf below to start your wellness journey today.
 </p>
           <img
