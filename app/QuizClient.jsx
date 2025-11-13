@@ -1408,8 +1408,23 @@ const winner = pickWinner(tallies, answers, weights, questions);
     </div>
   </Stage>
 )}
-
-
+{/* Data Privacy Notice — appears on all pages */}
+<footer
+  style={{
+    textAlign: "center",
+    fontSize: kiosk ? "1rem" : "0.9rem",
+    color: BRAND.text,
+    opacity: 0.75,
+    padding: "2rem 1rem",
+    width: "100%",
+    boxSizing: "border-box",
+  }}
+>
+  <p>
+    <strong>Your privacy matters:</strong> We don’t collect or store any personal information from this quiz. All
+    answers are processed anonymously to provide your results.
+  </p>
+</footer>
 
 
       <div className="h-4" aria-hidden />
