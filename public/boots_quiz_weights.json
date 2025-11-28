@@ -32,10 +32,10 @@
     "Vegan": ["Eic"],
     "Dairy free": ["Bmca"],
     "Gluten free": ["Eic"],
-    "Currently on GLP-1s": ["Gsi"],
+    "Currently using weight loss treatment": ["Gsi"],
     "Calorie Restricted Diet": ["Gsi"]
   },
-  "Do you often feel hungry or experience energy dips between meals?": {
+  "Do you often experience energy dips between meals?": {
     "Yes": ["Meca"],
     "Sometimes": ["Meca"]
   },
@@ -44,13 +44,13 @@
     "5+ times": ["Gsi"]
   },
   "What are your top two wellness priorities at the moment?": {
-    "Support balancing stress": ["Epi"],
+    "Support balancing everyday stress": ["Epi"],
     "More energy": ["Ecp"],
     "Better immunity": ["Eic"],
     "Better focus & memory": ["Cpe"],
     "Improved skin": ["Spe"],
     "Healthier hair & nails": ["Shp"],
-    "Menstrual cycle health": ["Hpes"],
+    "Menstrual cycle support": ["Hpes"],
     "Support menopause": ["Hcp"],
     "Gut health & digestion": ["Gsi"],
     "Weight maintenance": ["Bmca"],
