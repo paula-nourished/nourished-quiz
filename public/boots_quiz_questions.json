@@ -48,7 +48,7 @@
       "Vegetarian",
       "Vegan",
       "Calorie Restricted Diet",
-      "Currently on GLP-1s",
+      "Currently using weight loss treatment",
       "Dairy free",
       "Gluten free"
     ],
@@ -57,7 +57,7 @@
   {
     "id": "diet_during_the_day_do_you_get_hungry_or_have_en",
     "category": "Diet",
-    "title": "Do you often feel hungry or experience energy dips between meals?",
+    "title": "Do you often experience energy dips between meals?",
     "type": "single",
     "options": [
       "Yes",
@@ -155,13 +155,13 @@
     "title": "What are your top two wellness priorities at the moment?",
     "type": "multi",
     "options": [
-      "Support balancing stress",
+      "Support balancing everyday stress",
       "More energy",
       "Better immunity",
       "Better focus & memory",
       "Improved skin",
       "Healthier hair & nails",
-      "Menstrual cycle health",
+      "Menstrual cycle support",
       "Support menopause",
       "Gut health & digestion",
       "Weight maintenance",
