@@ -809,7 +809,22 @@ function ProductResultView({ code, tallies, kiosk }) {
   );
 }
 
-
+// ---- Boots URL map (SKU → product page) ADDED FOR ONLINE ONLY
+const BOOTS_URLS = {
+  BMCA: "https://www.boots.com/nourished-bmca-nutrient-stacks-30-gummies-10378545",
+  CPE:  "https://www.boots.com/nourish3d-cpe-nutrient-stacks-30-gummies-10378546",
+  ECP:  "https://www.boots.com/nourish3d-ecp-nutrient-stacks-30-gummies-10378547",
+  EIC:  "https://www.boots.com/nourish3d-eic-nutrient-stacks-30-gummies-10378548",
+  EPI:  "https://www.boots.com/nourish3d-epi-nutrient-stacks-30-gummies-10378549",
+  GSI:  "https://www.boots.com/nourish3d-gsi-nutrient-stacks-30-gummies-10378550",
+  HCP:  "https://www.boots.com/nourish3d-hcp-nutrient-stacks-30-gummies-10378551",
+  HPES: "https://www.boots.com/nourish3d-hpes-nutrient-stacks-30-gummies-10378552",
+  MECA: "https://www.boots.com/nourish3d-meca-nutrient-stacks-30-gummies-10378553",
+  MJB:  "https://www.boots.com/nourish3d-mjb-nutrient-stacks-30-gummies-10378554",
+  RNP:  "https://www.boots.com/nourish3d-rnp-nutrient-stacks-30-gummies-10378555",
+  SHP:  "https://www.boots.com/nourish3d-shp-nutrient-stacks-30-gummies-10378556",
+  SPE:  "https://www.boots.com/nourish3d-spe-nutrient-stacks-30-gummies-10378557"
+};
 
 // ---- Main
 export default function QuizClient() {
@@ -1389,19 +1404,35 @@ const winner = pickWinner(tallies, answers, weights, questions);
             {/* Product card with images, blurb, and compact counts inside */}
             <ProductResultView code={winner} tallies={tallies} context={context} kiosk={kiosk} />
 
-            {/* Bottom buttons */}
-            <div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
-              <Button
-                kiosk={kiosk}
-                onClick={() => {
-                  setAnswers({});
-                  setStep(0);
-                  setIdle(false);
-                }}
-              >
-                Restart
-              </Button>
-            </div>
+           {/* Bottom buttons */}
+<div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
+
+  {/* Go to Boots */}
+  <Button
+    kiosk={kiosk}
+    bg="#153247"
+    textColor="#ffffff"
+    onClick={() => {
+      const code = winner.toUpperCase();
+      const url = BOOTS_URLS[code];
+      if (url) window.open(url, "_blank");
+    }}
+  >
+    View on Boots.com
+  </Button>
+
+  {/* Restart */}
+  <Button
+    kiosk={kiosk}
+    onClick={() => {
+      setAnswers({});
+      setStep(0);
+      setIdle(false);
+    }}
+  >
+    Restart
+  </Button>
+</div>
           </>
         );
       })()}
