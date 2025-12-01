@@ -1363,82 +1363,40 @@ if (isPriorities(current)) {
       )}
 
       {/* results */}
-{isResults && (
-  <Stage kiosk={kiosk}>
-    <div style={{ width: "90vw", maxWidth: "90vw", marginInline: "auto", textAlign: "center" }}>
+{isResults && (() => {
+  const tallies = scoreAnswers(answers, weights, questions);
+  const winner = pickWinner(tallies, answers, weights, questions);
 
-      {(() => {
-const tallies = scoreAnswers(answers, weights, questions);
-const winner = pickWinner(tallies, answers, weights, questions);
+  // AUTO-REDIRECT TO BOOTS
+  if (winner) {
+    const sku = winner.toUpperCase();
+    const url = BOOTS_URLS[sku];
 
-        if (!winner) {
-          return (
-            <>
-              <div
-                className="mx-auto rounded-3xl border p-6"
-                style={{ width: "min(560px, 92vw)", borderColor: BRAND.border }}
-              >
-                <div className="text-6xl font-extrabold mb-2" style={{ color: BRAND.text }}>—</div>
-                <div style={{ opacity: 0.75 }}>No result yet — please answer the questions.</div>
-              </div>
+    if (url && typeof window !== "undefined") {
+      window.location.href = url;
+      return null; // stop rendering UI
+    }
+  }
 
-              {/* Bottom buttons */}
-              <div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
-                <Button
-                  kiosk={kiosk}
-                  onClick={() => {
-                    setAnswers({});
-                    setStep(0);
-                    setIdle(false);
-                  }}
-                >
-                  Restart
-                </Button>
-              </div>
-            </>
-          );
-        }
-
-        return (
-          <>
-            {/* Product card with images, blurb, and compact counts inside */}
-            <ProductResultView code={winner} tallies={tallies} context={context} kiosk={kiosk} />
-
-           {/* Bottom buttons */}
-<div className="grid gap-3 mt-6" style={{ width: "min(520px, 90vw)", marginInline: "auto" }}>
-
-  {/* Go to Boots */}
-  <Button
-    kiosk={kiosk}
-    bg="#153247"
-    textColor="#ffffff"
-    onClick={() => {
-      const code = winner.toUpperCase();
-      const url = BOOTS_URLS[code];
-      if (url) window.open(url, "_blank");
-    }}
-  >
-    View on Boots.com
-  </Button>
-
-  {/* Restart */}
-  <Button
-    kiosk={kiosk}
-    onClick={() => {
-      setAnswers({});
-      setStep(0);
-      setIdle(false);
-    }}
-  >
-    Restart
-  </Button>
-</div>
-          </>
-        );
-      })()}
-    </div>
-  </Stage>
-)}
+  // Fallback if no winner (rare)
+  return (
+    <Stage kiosk={kiosk}>
+      <div style={{ textAlign: "center" }}>
+        <p>No result found. Please restart.</p>
+        <Button
+          kiosk={kiosk}
+          onClick={() => {
+            setAnswers({});
+            setStep(0);
+            setIdle(false);
+          }}
+        >
+          Restart
+        </Button>
+      </div>
+    </Stage>
+  );
+})()}
 {/* Data Privacy Notice — appears on all pages */}
 <footer
   style={{
