@@ -836,9 +836,14 @@ export default function QuizClient() {
   useAutoResize();
 
   // Idle
-  const [idle, setIdle] = useState(true);
+  const [idle, setIdle] = useState(kiosk);
   const idleTimer = useRef(null);
   const IDLE_MS = kiosk ? 30000 : null;
+
+  // Ensure online (non-kiosk) mode never stays idle
+  useEffect(() => {
+    if (!kiosk) setIdle(false);
+  }, [kiosk]);
 
   // Steps / data
   const [loading, setLoading] = useState(true);
