@@ -838,7 +838,7 @@ export default function QuizClient() {
   // Idle
   const [idle, setIdle] = useState(true);
   const idleTimer = useRef(null);
-  const IDLE_MS = kiosk ? 30000 : 120000;
+  const IDLE_MS = kiosk ? 30000 : null;
 
   // Steps / data
   const [loading, setLoading] = useState(true);
@@ -853,6 +853,7 @@ export default function QuizClient() {
   }, []);
 
 const bumpIdle = useCallback(() => {
+	if (!kiosk) return; // ⬅️ STOP idle handling for online
   setIdle(false);
   if (idleTimer.current) clearTimeout(idleTimer.current);
   idleTimer.current = setTimeout(() => {
@@ -860,14 +861,15 @@ const bumpIdle = useCallback(() => {
     resetAll();
     setStep(0); // ensure it always returns to intro
   }, IDLE_MS);
-}, [IDLE_MS, resetAll]);
+}, [IDLE_MS, resetAll, kiosk]);
 
   useEffect(() => {
+	    if (!kiosk) return;
     const onAny = () => bumpIdle();
     ["pointerdown", "keydown", "touchstart"].forEach((ev) => window.addEventListener(ev, onAny));
     bumpIdle();
     return () => ["pointerdown", "keydown", "touchstart"].forEach((ev) => window.removeEventListener(ev, onAny));
-  }, [bumpIdle]);
+  }, [bumpIdle], kiosk);
 
   const FALLBACK = [
     {
